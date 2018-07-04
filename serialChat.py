@@ -1,15 +1,18 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 import libs.settingsDialog as settingsDialog
+import libs.serialThreads as sThreads
 import libs.libserial as libserial
 import time
+import os
 
 
 
 
 icons_folder = "resources/icons/"
-
-
+nickname = "Guest"
+default_save_folder = os.path.expanduser('~')
+serial_port = None
 
 
 
@@ -19,6 +22,9 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super(self.__class__,self).__init__()
+        self.nickname = nickname
+        self.default_save_folder = default_save_folder
+        self.serial_port = serial_port
 
 
         
@@ -68,7 +74,7 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(icons_folder+'chat.ico'))
         self.show()
 
-        self.threadReceiving = libserial.ReceiveData(self)
+        self.threadReceiving = sThreads.ReceiveData(self)
         self.threadReceiving.start()
 
 

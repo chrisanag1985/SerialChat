@@ -1,8 +1,9 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
+import libserial 
 
 
-serial_speed = ["2400","4800","9600","19200"]
+serial_speeds = ["2400","4800","9600","19200"]
 parity_values = ["None","Odd","Even"]
 bytesize_values = [5,6,7,8]
 stop_values = ["1","1,5","2"]
@@ -17,28 +18,68 @@ class SettingsWindow(QDialog):
 
     def __init__(self,parent):
         super(self.__class__,self).__init__(parent)
+        self.parent = parent 
+        self.lib = libserial.initApp(self)
 
         self.setWindowTitle('Settings')
 
         self.buttonbox = QDialogButtonBox( QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttonbox.button(QDialogButtonBox.Ok).setText("Connect")
         self.buttonbox.accepted.connect(self.accept)
+        self.accepted.connect(self.applyChanges)
         self.buttonbox.rejected.connect(self.reject)
         self.serialDropDown = QComboBox()
-        self.customSettings = QCheckBox()
-        self.serialSpeed = QComboBox()
+
+        self.lib.init__serial()
+        self.serialvalues =self.lib.get_serials()
+        for serials in self.serialvalues: 
+            self.serialDropDown.addItem(serials)
+        
+        if self.parent.serial_port != None:
+            self.serialDropDown.setCurrentIndex(self.serialvalues.index(self.parent.serial_port))
+
+        self.customsettings = QCheckBox()
+        self.customsettings.stateChanged.connect(self.customSettings)
+         
+        self.serialspeed = QComboBox()
+        for sp in serial_speeds:
+            self.serialspeed.addItem(str(sp))
+        self.serialspeed.setCurrentIndex(serial_speeds.index('9600'))
+        self.serialspeed.setDisabled(True)
+
         self.databits = QComboBox()
+        for db in bytesize_values:
+            self.databits.addItem(str(db))
+        self.databits.setCurrentIndex(bytesize_values.index(8))
+        self.databits.setDisabled(True)
+
         self.stopbits = QComboBox()
+        for sb in stop_values:
+            self.stopbits.addItem(str(sb))
+        self.stopbits.setCurrentIndex(stop_values.index('1'))
+        self.stopbits.setDisabled(True)
+
         self.parity = QComboBox()
-        self.flowControl = QComboBox()
-        self.nickname = QLineEdit()
-        self.saveFolder = QLineEdit()
-        self.buttonDir = QPushButton()
-        self.buttonDir.setIcon(QIcon(icons_folder+'folder.png'))
+        for par in parity_values:
+            self.parity.addItem(str(par))
+        self.parity.setCurrentIndex(parity_values.index("None"))
+        self.parity.setDisabled(True)
+
+        self.flowcontrol = QComboBox()
+        for fc in flow_control_values:
+            self.flowcontrol.addItem(str(fc))
+        self.flowcontrol.setCurrentIndex(parity_values.index("None"))
+        self.flowcontrol.setDisabled(True)
+        
+        self.nickname = QLineEdit(self.parent.nickname)
+        
+        self.savefolder = QLineEdit(self.parent.default_save_folder)
+        self.buttondir = QPushButton()
+        self.buttondir.setIcon(QIcon(icons_folder+'folder.png'))
         
         self.hBoxLayout = QHBoxLayout()
-        self.hBoxLayout.addWidget(self.saveFolder)
-        self.hBoxLayout.addWidget(self.buttonDir)
+        self.hBoxLayout.addWidget(self.savefolder)
+        self.hBoxLayout.addWidget(self.buttondir)
         self.hBoxContainer = QWidget()
         self.hBoxContainer.setLayout(self.hBoxLayout)
         
@@ -47,14 +88,54 @@ class SettingsWindow(QDialog):
         
         self.grid = QFormLayout()
         self.grid.addRow("Serial:",self.serialDropDown)
-        self.grid.addRow("Custom Serial Settings",self.customSettings)
-        self.grid.addRow("Serial Speed(baud):",self.serialSpeed)
+        self.grid.addRow("Custom Serial Settings",self.customsettings)
+        self.grid.addRow("Serial Speed(baud):",self.serialspeed)
         self.grid.addRow("Data Bits:",self.databits)
         self.grid.addRow("Stop Bits:",self.stopbits)
         self.grid.addRow("Parity:",self.parity)
-        self.grid.addRow("Flow Control:",self.flowControl)
+        self.grid.addRow("Flow Control:",self.flowcontrol)
         self.grid.addRow("Nickname:",self.nickname)
         self.grid.addRow("Save File Folder:",self.hBoxContainer)
         self.grid.addRow("",self.buttonbox)
         self.setLayout(self.grid)
         self.show()
+
+
+    def applyChanges(self):
+        
+        if self.customsettings.isChecked():
+
+            if  self.flowcontrol.currentText() ==  "XON/XOFF":
+                x_control = True
+            else:
+                x_control = False
+
+            if self.flowcontrol.currentText() == "RTS/CTS":
+                r_control = True
+            else:
+                r_control = False
+            res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
+        else:
+            res = self.lib.set_serial(port=self.serialDropDown.currentText())
+        if res !=2:
+            print("Settings is ok")
+        if self.nickname.text() != "":
+            self.parent.nickname = self.nickname.text()
+        if self.savefolder.text() != "" :
+            self.parent.savefolder = self.savefolder.text()
+        self.parent.statusBar.showMessage("Serial Port is initialized...")
+
+
+    def customSettings(self):
+        if self.customsettings.isChecked():
+            self.serialspeed.setDisabled(False)
+            self.databits.setDisabled(False)
+            self.stopbits.setDisabled(False)
+            self.parity.setDisabled(False)
+            self.flowcontrol.setDisabled(False)
+        else:
+            self.serialspeed.setDisabled(True)
+            self.databits.setDisabled(True)
+            self.stopbits.setDisabled(True)
+            self.parity.setDisabled(True)
+            self.flowcontrol.setDisabled(True)
