@@ -68,9 +68,29 @@ class initApp(QThread):
 
     def set_serial(self,**kwargs):
 
-        print("start serial")
             
+        try:
+            if len(kwargs) == 1:
 
+                serialInterface = serial.Serial(port=kwargs['port'])
+
+            if len(kwargs) > 1:
+                
+                bytesize_table={ 5:serial.FIVEBITS,6:serial.SIXBITS,7:serial.SEVENBITS,8:serial.EIGHTBITS}
+                par_table = {  'None':serial.PARITY_NONE , 'Odd':serial.PARITY_ODD , 'Even':serial.PARITY_EVEN}
+                stop_table = { '1':serial.STOPBITS_ONE,'1,5':serial.STOPBITS_ONE_POINT_FIVE,'2':serial.STOPBITS_TWO}
+                serialInterface  = serial.Serial(port=kwargs['port'],baudrate=kwargs['baudrate'],bytesize=bytesize_table[int(kwargs['bytesize'])],parity=par_table[kwargs['parity']],stopbits=stop_table[kwargs['stopbits']],xonxoff=kwargs['xonxoff'],rtscts=kwargs['rtscts'])
+            
+            #do i need this????
+            serialInterface.timeout = 1
+            serialInterface.flushInput()
+            serialInterface.flushOutput()
+
+            return serialInterface 
+
+        except Exception as e:
+
+            return e
 
 
 

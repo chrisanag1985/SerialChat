@@ -13,6 +13,8 @@ icons_folder = "resources/icons/"
 
 
 
+
+
 class SettingsWindow(QDialog):
 
 
@@ -21,7 +23,7 @@ class SettingsWindow(QDialog):
         self.parent = parent 
         self.lib = libserial.initApp(self)
 
-        self.setWindowTitle('Settings')
+        self.setWindowTitle('SerialChat Settings')
 
         self.buttonbox = QDialogButtonBox( QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttonbox.button(QDialogButtonBox.Ok).setText("Connect")
@@ -37,6 +39,8 @@ class SettingsWindow(QDialog):
         
         if self.parent.serial_port != None:
             self.serialDropDown.setCurrentIndex(self.serialvalues.index(self.parent.serial_port))
+
+        self.intervaltime = QLineEdit(str(self.parent.intervaltime))
 
         self.customsettings = QCheckBox()
         self.customsettings.stateChanged.connect(self.customSettings)
@@ -76,6 +80,7 @@ class SettingsWindow(QDialog):
         self.savefolder = QLineEdit(self.parent.default_save_folder)
         self.buttondir = QPushButton()
         self.buttondir.setIcon(QIcon(icons_folder+'folder.png'))
+        self.buttondir.clicked.connect(self.choose_save_dir)
         
         self.hBoxLayout = QHBoxLayout()
         self.hBoxLayout.addWidget(self.savefolder)
@@ -88,6 +93,7 @@ class SettingsWindow(QDialog):
         
         self.grid = QFormLayout()
         self.grid.addRow("Serial:",self.serialDropDown)
+        self.grid.addRow("Interval Time:",self.intervaltime)
         self.grid.addRow("Custom Serial Settings",self.customsettings)
         self.grid.addRow("Serial Speed(baud):",self.serialspeed)
         self.grid.addRow("Data Bits:",self.databits)
@@ -99,6 +105,19 @@ class SettingsWindow(QDialog):
         self.grid.addRow("",self.buttonbox)
         self.setLayout(self.grid)
         self.show()
+
+
+
+    def choose_save_dir(self):
+        fname = QFileDialog(self)
+        fname.setFileMode(QFileDialog.Directory)
+        fname.setOption(QFileDialog.ShowDirsOnly)
+
+        if fname.exec_():
+            filename = fname.selectedFiles()[0]
+            self.savefolder.setText(filename)
+            
+        
 
 
     def applyChanges(self):
@@ -117,13 +136,19 @@ class SettingsWindow(QDialog):
             res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
         else:
             res = self.lib.set_serial(port=self.serialDropDown.currentText())
-        if res !=2:
-            print("Settings is ok")
+        if type(res) != OSError:
+            self.parent.serial_port = res 
+            #print self.parent.serial_port.port
+            self.parent.statusBar.showMessage("Serial Interface %s has started..."%self.parent.serial_port.port)
+        else:
+            self.parent.statusBar.showMessage(str(res))
         if self.nickname.text() != "":
             self.parent.nickname = self.nickname.text()
         if self.savefolder.text() != "" :
-            self.parent.savefolder = self.savefolder.text()
-        self.parent.statusBar.showMessage("Serial Port is initialized...")
+            self.parent.default_save_folder = self.savefolder.text()
+        self.parent.intervaltime = int(self.intervaltime.text())
+        
+        
 
 
     def customSettings(self):
