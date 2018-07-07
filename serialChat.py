@@ -139,26 +139,27 @@ class MainWindow(QMainWindow):
         settingsDialog.SettingsWindow(self)
 
     def sendFile(self):
-        if not self.iswaitingData and not self.send.isRunning() and self.checkIfsettingsROK():
-            self.showBar.showMessage("Start Sending...",5000)
-            fname = QFileDialog(self)
-            fname.setFileMode(QFileDialog.ExistingFile)
+        if self.checkIfsettingsROK():
+            if not self.iswaitingData and not self.send.isRunning() :
+                self.showBar.showMessage("Start Sending...",5000)
+                fname = QFileDialog(self)
+                fname.setFileMode(QFileDialog.ExistingFile)
 
-            if fname.exec_():
-                 filename = fname.selectedFiles()[0]
-                 self.send.type = 'file'
-                 with open(filename,'r') as f:
-                     fileText = ''
-                     for line in f.xreadlines():
-                         fileText +=line
-                 self.send.text = fileText
-                 tt = "[ Sent File : "+filename+"  @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ] "
-                 tmp  = QListWidgetItem(tt)
-                 tmp.setForeground(QColor('red'))
-                 self.listWidget.addItem(tmp)
-                 self.listWidget.scrollToBottom()
-                 self.send.filename  = ntpath.basename(filename)
-                 self.send.start()
+                if fname.exec_():
+                     filename = fname.selectedFiles()[0]
+                     self.send.type = 'file'
+                     with open(filename,'r') as f:
+                         fileText = ''
+                         for line in f.xreadlines():
+                             fileText +=line
+                     self.send.text = fileText
+                     tt = "[ Sent File : "+filename+"  @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ] "
+                     tmp  = QListWidgetItem(tt)
+                     tmp.setForeground(QColor('red'))
+                     self.listWidget.addItem(tmp)
+                     self.listWidget.scrollToBottom()
+                     self.send.filename  = ntpath.basename(filename)
+                     self.send.start()
 
     def openAbout(self):
         t = """
@@ -196,24 +197,24 @@ class MainWindow(QMainWindow):
         return True
 
     def sendMsg(self):
-        
-        if not self.iswaitingData and not self.send.isRunning() and self.checkIfsettingsROK():
-            self.statusBar.showMessage("Start Sending...",5000)
+        if self.checkIfsettingsROK():
+            if not self.iswaitingData and not self.send.isRunning():
+                self.statusBar.showMessage("Start Sending...",5000)
 
-            self.send.text = self.inputText.toPlainText()
-            self.send.filename = None
-            self.send.type = 'msg'
-            find = re.search("^\s*$",self.send.text)
-            if not find:
-                tt = "[ "+self.nickname+" (me) @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "+self.send.text
-                tmp = QListWidgetItem(tt)
-                tmp.setForeground(QColor('blue'))
-                self.listWidget.addItem(tmp)
-                self.listWidget.scrollToBottom()
-                self.send.start()
-                self.inputText.clear()
-        elif self.iswaitingData:
-           self.statusBar.showMessage("Cannot send yet... Receiving data...",5000)
+                self.send.text = self.inputText.toPlainText()
+                self.send.filename = None
+                self.send.type = 'msg'
+                find = re.search("^\s*$",self.send.text)
+                if not find:
+                    tt = "[ "+self.nickname+" (me) @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "+self.send.text
+                    tmp = QListWidgetItem(tt)
+                    tmp.setForeground(QColor('blue'))
+                    self.listWidget.addItem(tmp)
+                    self.listWidget.scrollToBottom()
+                    self.send.start()
+                    self.inputText.clear()
+            elif self.iswaitingData:
+               self.statusBar.showMessage("Cannot send yet... Receiving data...",5000)
 
     def clearSendingArea(self):
         self.inputText.clear()
