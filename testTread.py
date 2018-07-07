@@ -116,7 +116,7 @@ class Receive(QThread):
     catchESF = Signal(str)
     catchEOP = Signal(int)
 
-    def __init__(self,ser):
+    def __init__(self,parent):
         QThread.__init__(self)
         self.iswaitingData = False
         self.data = {} 
@@ -126,7 +126,8 @@ class Receive(QThread):
         self.filename = None 
         self.nickname = None
         self.type = None
-        self.ser = ser
+        self.ser = parent.serial_port 
+        self.parent = parent
 
     def clear_vars(self):
         self.data = {}

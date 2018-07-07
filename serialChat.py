@@ -102,7 +102,7 @@ class MainWindow(QMainWindow):
         if self.receive == None:
             print("Starting Threads...")
             self.send = libthread.Send(self)
-            self.receive = libthread.Receive(self.serial_port)
+            self.receive = libthread.Receive(self)
 
             self.receive.startRCV.connect(self.startRCV)
             self.receive.endRCV.connect(self.endRCV)
@@ -117,6 +117,7 @@ class MainWindow(QMainWindow):
         settingsDialog.SettingsWindow(self)
 
     def sendFile(self):
+        if not self.iswaitingData and not self.send.isRunning() and self.checkIfsettingsROK():
             fname = QFileDialog(self)
             fname.setFileMode(QFileDialog.ExistingFile)
 
@@ -146,9 +147,11 @@ class MainWindow(QMainWindow):
 
     def sendMsg(self):
         
-        if not self.iswaitingData and self.checkIfsettingsROK():
+        if not self.iswaitingData and not self.send.isRunning() and self.checkIfsettingsROK():
 
             self.send.text = self.inputText.toPlainText()
+            self.send.filename = None
+            self.send.type = 'msg'
             find = re.search("^\s*$",self.send.text)
             if not find:
                 tt = "[ "+self.nickname+" (me) @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "+self.send.text
@@ -178,14 +181,15 @@ class MainWindow(QMainWindow):
         print self.receive.nickname
         if self.receive.pieces > 0 :
             for chunk in range(0,self.receive.pieces):
-                #print(rdata['data_'+str(chunk)])
                 end_text += rdata['data_'+str(chunk)]
         if self.receive.remain > 0:
-            #print("remain") 
-            #print(rdata['data_remain'])
             end_text += rdata['data_remain']
         print end_text
-        return end_text.decode('utf-8')
+        print(type(end_text))
+        if type(end_text) == unicode:
+            return end_text.decode('utf-8')
+        else:
+            return end_text
 
                 
 
@@ -195,8 +199,21 @@ class MainWindow(QMainWindow):
         self.counter = 0
         print("Ended receiving the data...")
         print(self.receive.data)
-        tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
-        tt += self.reassembleData(self.receive.data)
+        if self.receive.type == 'msg':
+            tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
+            tt += self.reassembleData(self.receive.data)
+         
+        elif self.receive.type == 'file':
+           print("Found a file")
+           print(self.receive.filename)
+           print(self.default_save_folder)
+           with open(self.default_save_folder+str('/')+self.receive.filename,'w') as f:
+               f.write(self.reassembleData(self.receive.data))
+           f.close()
+           tt = "[ Received File from "+self.receive.nickname+"  @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
+           tt += self.default_save_folder+str('/')+self.receive.filename
+           
+
         self.receive.clear_vars()
         tmp = QListWidgetItem(tt)
         tmp.setForeground(QColor('green'))
