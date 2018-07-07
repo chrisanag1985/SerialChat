@@ -43,6 +43,8 @@ class Send(QThread):
 
     def run(self):
         print("Start Sending...")
+        if type(self.text) == unicode:
+            self.text = self.text.encode('utf-8')
         full_size = len(self.text)
         print(full_size)
         pieces = full_size/1024
@@ -74,7 +76,7 @@ class Send(QThread):
 
                 t2s = ''
                 sending_data = {}
-                texttmp = self.text[-(remain):].encode('utf-8')
+                texttmp = self.text[-(remain):]
                 self.counter += len(texttmp)
                 sending_data['data_remain'] = base64.b64encode(texttmp)
                 t2s = json.dumps(sending_data)
@@ -83,7 +85,6 @@ class Send(QThread):
                 self.ser.flush()
                 print(self.counter)
             elif i == pieces and remain == 0:
-                print("send just eof")
                 t2s = ''
                 sending_data['data_remain'] = base64.b64encode("_")
                 t2s = json.dumps(sending_data)
@@ -93,7 +94,7 @@ class Send(QThread):
             else:
                 t2s = ''
                 sending_data = {}
-                texttmp = self.text[size*i:size*(i+1)].encode('utf-8')
+                texttmp = self.text[size*i:size*(i+1)]
                 self.counter += len(texttmp)
                 sending_data['data_'+str(i)] =  base64.b64encode(texttmp)
                 t2s = json.dumps(sending_data)

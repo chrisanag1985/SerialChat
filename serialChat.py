@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 from PySide.QtCore import *
 from PySide.QtGui import *
 import libs.settingsDialog as settingsDialog
@@ -7,6 +8,8 @@ import time
 import os
 import re
 import datetime
+import ntpath
+import base64
 
 
 
@@ -43,6 +46,7 @@ class MainWindow(QMainWindow):
         self.Menusettings.addAction(self.actionOpenSettings)
         self.MenuSendFile = self.menuBar.addMenu('Send File')
         self.actionSendFile = QAction("Choose File to Send",self)
+        self.actionSendFile.triggered.connect(self.sendFile)
         #add trigger 
         self.MenuSendFile.addAction(self.actionSendFile)
         self.MenuHelp = self.menuBar.addMenu('Help')
@@ -113,7 +117,19 @@ class MainWindow(QMainWindow):
         settingsDialog.SettingsWindow(self)
 
     def sendFile(self):
-        pass
+            fname = QFileDialog(self)
+            fname.setFileMode(QFileDialog.ExistingFile)
+
+            if fname.exec_():
+                 filename = fname.selectedFiles()[0]
+                 self.send.type = 'file'
+                 with open(filename,'r') as f:
+                     fileText = ''
+                     for line in f.xreadlines():
+                         fileText +=line
+                 self.send.text = fileText
+                 self.send.filename  = ntpath.basename(filename)
+                 self.send.start()
 
     def openAbout(self):
         pass
@@ -162,13 +178,14 @@ class MainWindow(QMainWindow):
         print self.receive.nickname
         if self.receive.pieces > 0 :
             for chunk in range(0,self.receive.pieces):
-                print(rdata['data_'+str(chunk)])
+                #print(rdata['data_'+str(chunk)])
                 end_text += rdata['data_'+str(chunk)]
         if self.receive.remain > 0:
-            print("remain") 
-            print(rdata['data_remain'])
+            #print("remain") 
+            #print(rdata['data_remain'])
             end_text += rdata['data_remain']
-        return end_text
+        print end_text
+        return end_text.decode('utf-8')
 
                 
 
@@ -178,7 +195,8 @@ class MainWindow(QMainWindow):
         self.counter = 0
         print("Ended receiving the data...")
         print(self.receive.data)
-        tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "+self.reassembleData(self.receive.data)
+        tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
+        tt += self.reassembleData(self.receive.data)
         self.receive.clear_vars()
         tmp = QListWidgetItem(tt)
         tmp.setForeground(QColor('green'))
