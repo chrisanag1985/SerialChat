@@ -38,7 +38,7 @@ class SettingsWindow(QDialog):
             self.serialDropDown.addItem(serials)
         
         if self.parent.serial_port != None:
-            self.serialDropDown.setCurrentIndex(self.serialvalues.index(self.parent.serial_port))
+            self.serialDropDown.setCurrentIndex(self.serialvalues.index(self.parent.serial_port.name))
 
         self.intervaltime = QLineEdit(str(self.parent.intervaltime))
 
@@ -122,6 +122,12 @@ class SettingsWindow(QDialog):
 
     def applyChanges(self):
         
+        res = None
+        if self.nickname.text() != "":
+            self.parent.nickname = self.nickname.text()
+        if self.savefolder.text() != "" :
+            self.parent.default_save_folder = self.savefolder.text()
+        self.parent.intervaltime = int(self.intervaltime.text())
         if self.customsettings.isChecked():
 
             if  self.flowcontrol.currentText() ==  "XON/XOFF":
@@ -133,20 +139,27 @@ class SettingsWindow(QDialog):
                 r_control = True
             else:
                 r_control = False
-            res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
+            if self.parent.receive == None:
+                res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
+            else:
+                self.parent.receive.exit()
+                self.parent.receive = None
+                res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
         else:
-            res = self.lib.set_serial(port=self.serialDropDown.currentText())
-        if type(res) != OSError:
+            if self.parent.receive == None:
+                res = self.lib.set_serial(port=self.serialDropDown.currentText())
+            else:
+                self.parent.receive.exit()
+                self.parent.receive = None
+                res = self.lib.set_serial(port=self.serialDropDown.currentText())
+        if type(res) == OSError:
+            self.parent.statusBar.showMessage(str(res))
+        if type(res) != None:
             self.parent.serial_port = res 
-            #print self.parent.serial_port.port
+            self.parent.startThreads()
             self.parent.statusBar.showMessage("Serial Interface %s has started..."%self.parent.serial_port.port)
         else:
-            self.parent.statusBar.showMessage(str(res))
-        if self.nickname.text() != "":
-            self.parent.nickname = self.nickname.text()
-        if self.savefolder.text() != "" :
-            self.parent.default_save_folder = self.savefolder.text()
-        self.parent.intervaltime = int(self.intervaltime.text())
+            print("Sth else just happend...")
         
         
 
