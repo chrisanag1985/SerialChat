@@ -2,7 +2,7 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 import libs.settingsDialog as settingsDialog
-import testTread as libthread 
+import libs.serialThreads as libthread 
 import libs.libserial as libserial
 import time
 import os
@@ -10,6 +10,7 @@ import re
 import datetime
 import ntpath
 import base64
+import json
 
 
 
@@ -47,13 +48,19 @@ class MainWindow(QMainWindow):
         self.MenuSendFile = self.menuBar.addMenu('Send File')
         self.actionSendFile = QAction("Choose File to Send",self)
         self.actionSendFile.triggered.connect(self.sendFile)
-        #add trigger 
         self.MenuSendFile.addAction(self.actionSendFile)
         self.MenuHelp = self.menuBar.addMenu('Help')
         self.actionOpenHelp = QAction("Manual",self)
         self.actionOpenAbout = QAction("About",self)
         self.MenuHelp.addAction(self.actionOpenHelp)
+        self.actionOpenHelp.triggered.connect(self.openHelp)
         self.MenuHelp.addAction(self.actionOpenAbout)
+        self.actionOpenAbout.triggered.connect(self.openAbout)
+
+        self.MenuExit = self.menuBar.addMenu('Exit')
+        self.actionExit = QAction('Exit App',self)
+        self.actionExit.triggered.connect(self.exitApp)
+        self.MenuExit.addAction(self.actionExit)
 
         self.setMenuBar(self.menuBar)
 
@@ -85,7 +92,7 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.BottomDockWidgetArea,self.downDockWidget)
 
         self.statusBar = QStatusBar()
-        self.statusBar.showMessage("Started!!!")
+        self.statusBar.showMessage("Started!!!",5000)
         self.setStatusBar(self.statusBar)
 
         win = QWidget()
@@ -98,11 +105,26 @@ class MainWindow(QMainWindow):
         self.show()
 
 
+
+    def exitApp(self):
+        if self.send != None:
+            if self.send.isRunning():
+                self.send.exit()
+        if self.receive !=None:
+            if self.receive.isRunning():
+                self.receive.loopRun = False
+                self.receive.wait()
+        self.close()
+
     def startThreads(self):
         if self.receive == None:
-            print("Starting Threads...")
+            self.statusBar.showMessage("Starting Threads...",5000)
             self.send = libthread.Send(self)
             self.receive = libthread.Receive(self)
+
+            self.send.totalData.connect(self.totalData)
+            self.send.sendData.connect(self.sendData)
+            self.send.endData.connect(self.endData)
 
             self.receive.startRCV.connect(self.startRCV)
             self.receive.endRCV.connect(self.endRCV)
@@ -118,6 +140,7 @@ class MainWindow(QMainWindow):
 
     def sendFile(self):
         if not self.iswaitingData and not self.send.isRunning() and self.checkIfsettingsROK():
+            self.showBar.showMessage("Start Sending...",5000)
             fname = QFileDialog(self)
             fname.setFileMode(QFileDialog.ExistingFile)
 
@@ -129,11 +152,38 @@ class MainWindow(QMainWindow):
                      for line in f.xreadlines():
                          fileText +=line
                  self.send.text = fileText
+                 tt = "[ Sent File : "+filename+"  @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ] "
+                 tmp  = QListWidgetItem(tt)
+                 tmp.setForeground(QColor('red'))
+                 self.listWidget.addItem(tmp)
+                 self.listWidget.scrollToBottom()
                  self.send.filename  = ntpath.basename(filename)
                  self.send.start()
 
     def openAbout(self):
-        pass
+        t = """
+        A Multi-Threading Chat Application for communication over serial cable.
+
+                     
+                     Created by Christos Anagnostopoulos.
+                         chrisanag1985@gmail.com
+
+        """
+        msgBox = QMessageBox.about(self,"SerialChat Application",t)
+
+    def openHelp(self):
+        t = """
+        
+        this is a fucking test
+
+        how about this
+        !!!
+
+
+
+        """
+        helpBox = QMessageBox.question(self,"SerialChat Application Help",t)
+
 
     def checkIfsettingsROK(self):
         
@@ -148,6 +198,7 @@ class MainWindow(QMainWindow):
     def sendMsg(self):
         
         if not self.iswaitingData and not self.send.isRunning() and self.checkIfsettingsROK():
+            self.statusBar.showMessage("Start Sending...",5000)
 
             self.send.text = self.inputText.toPlainText()
             self.send.filename = None
@@ -162,30 +213,38 @@ class MainWindow(QMainWindow):
                 self.send.start()
                 self.inputText.clear()
         elif self.iswaitingData:
-            print("Cannot send yet... im receiving data...")
+           self.statusBar.showMessage("Cannot send yet... Receiving data...",5000)
 
     def clearSendingArea(self):
         self.inputText.clear()
 
     @Slot()
+    def sendData(self,xx):
+        self.progressBar.setValue(xx)
+
+    @Slot()
+    def totalData(self,total):
+        self.progressBar.setMaximum(total)
+        self.progressBar.setMinimum(0)
+        self.progressBar.setValue(0)
+
+    @Slot()
+    def endData(self):
+        self.statusBar.showMessage("Data has been Sent...",5000)
+
+    @Slot()
     def startRCV(self,x):
         self.iswaitingData = True
-        print("Start Receiving...")
         
     def reassembleData(self,rdata):
 
         end_text = ''
         count = 0
-        print self.receive.pieces
-        print self.receive.remain
-        print self.receive.nickname
         if self.receive.pieces > 0 :
             for chunk in range(0,self.receive.pieces):
                 end_text += rdata['data_'+str(chunk)]
         if self.receive.remain > 0:
             end_text += rdata['data_remain']
-        print end_text
-        print(type(end_text))
         if type(end_text) == unicode:
             return end_text.decode('utf-8')
         else:
@@ -195,18 +254,14 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def endRCV(self):
+        self.statusBar.showMessage("Receiving Data has ended...",5000)
         self.iswaitingData = False
         self.counter = 0
-        print("Ended receiving the data...")
-        print(self.receive.data)
         if self.receive.type == 'msg':
             tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
             tt += self.reassembleData(self.receive.data)
          
         elif self.receive.type == 'file':
-           print("Found a file")
-           print(self.receive.filename)
-           print(self.default_save_folder)
            with open(self.default_save_folder+str('/')+self.receive.filename,'w') as f:
                f.write(self.reassembleData(self.receive.data))
            f.close()
@@ -216,20 +271,28 @@ class MainWindow(QMainWindow):
 
         self.receive.clear_vars()
         tmp = QListWidgetItem(tt)
-        tmp.setForeground(QColor('green'))
+        if self.receive.type=='msg':
+            tmp.setForeground(QColor('green'))
+        elif self.receive.type=='file':
+            tmp.setForeground(QColor('red'))
         self.listWidget.addItem(tmp)
         self.listWidget.scrollToBottom()
 
     @Slot()
     def catchESF(self,specs):
-        print("Found Spec of Files...")
-        print(specs)
+        self.statusBar.showMessage("Receiving Data...",10000)
+        specs = specs.replace("_E_s_F_","")
+        specs = json.loads(specs)
+        self.progressBar.setMaximum( int(specs['size']))
+        self.progressBar.setMinimum(  0)
+        self.progressBar.setValue( 0)
+
 
     @Slot()
     def catchEOP(self,len_of_data):
-        print("Catch %i"%int(len_of_data))
+        self.statusBar.showMessage("Receiving Data...",10000)
         self.counter += int(len_of_data)
-        print(self.counter)
+        self.progressBar.setValue(self.counter)
 
 
 

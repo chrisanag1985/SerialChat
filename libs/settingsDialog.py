@@ -142,6 +142,7 @@ class SettingsWindow(QDialog):
             if self.parent.receive == None:
                 res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
             else:
+                self.parent.receive.loopRun = False
                 self.parent.receive.exit()
                 self.parent.receive = None
                 res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
