@@ -109,7 +109,7 @@ class MainWindow(QMainWindow):
     def exitApp(self):
         if self.send != None:
             if self.send.isRunning():
-                self.send.exit()
+                self.send.wait()
         if self.receive !=None:
             if self.receive.isRunning():
                 self.receive.loopRun = False
@@ -132,6 +132,7 @@ class MainWindow(QMainWindow):
             self.receive.catchEOP.connect(self.catchEOP)
 
             self.receive.start()
+
 
 
 
