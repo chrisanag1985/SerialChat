@@ -33,7 +33,7 @@ pip2 install pyserial
 ## Installation
 There is no need for installation process.
 
-Just clone the project to your computer and run the **gui.py**
+Just clone the project to your computer and run the serialChat.py**
 ```bash
 python2.7 serialChat.py
 ```
