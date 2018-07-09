@@ -176,9 +176,9 @@ class Receive(QThread):
                 if "_E_0_P_" in tdata:
                     tdata  = tdata.replace("_E_0_P_","")
                     #lenofdata = len(tdata)
-                    tdata = json.loads(tdata) 
-                    key,value = tdata.popitem() 
                     try:
+                        tdata = json.loads(tdata) 
+                        key,value = tdata.popitem() 
                         value = base64.b64decode(value)
                     except Exception:
                         print("Problem... b64")
@@ -191,9 +191,9 @@ class Receive(QThread):
 
                 if "_E_0_F_" in tdata:
                     tdata  = tdata.replace("_E_0_F_","")
-                    tdata = json.loads(tdata) 
-                    key,value = tdata.popitem() 
                     try:
+                        tdata = json.loads(tdata) 
+                        key,value = tdata.popitem() 
                         value = base64.b64decode(value)
                     except Exception:
                         print("Problem...b64")
