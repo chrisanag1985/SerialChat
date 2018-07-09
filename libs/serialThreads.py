@@ -66,8 +66,8 @@ class Send(QThread):
         t2s += "_E_s_F_"
         self.ser.write(t2s)
         self.ser.flush()
-        time.sleep(1)
-        texttmp = ''
+        time.sleep(3) 
+        texttmp = '' 
         sending_data = {}
         self.counter = 0
 
@@ -85,6 +85,8 @@ class Send(QThread):
                 self.ser.flush()
                 self.sendData.emit(self.counter)
                 self.endData.emit()
+                self.ser.flushInput()
+                self.ser.flushOutput()
             elif i == pieces and remain == 0:
                 t2s = ''
                 sending_data['data_remain'] = base64.b64encode("_")
@@ -93,6 +95,8 @@ class Send(QThread):
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.endData.emit()
+                self.ser.flushInput()
+                self.ser.flushOutput()
             else:
                 t2s = ''
                 sending_data = {}
@@ -156,14 +160,18 @@ class Receive(QThread):
                     self.catchESF.emit(tdata)
 
                     tdata = tdata.replace("_E_s_F_","")
-                    tdata = json.loads(tdata)
-                    self.size = tdata['size']
-                    self.filename = tdata['filename']
-                    self.nickname = tdata['nickname']
-                    self.pieces = tdata['pieces']
-                    self.remain = tdata['remain']
-                    self.type = tdata['type']
-                    tdata=''
+                    try:
+                        tdata = json.loads(tdata)
+                        self.size = tdata['size']
+                        self.filename = tdata['filename']
+                        self.nickname = tdata['nickname']
+                        self.pieces = tdata['pieces']
+                        self.remain = tdata['remain']
+                        self.type = tdata['type']
+                        tdata=''
+                    except Exception:
+                        print(Exception)
+                        tdata=''
 
                 if "_E_0_P_" in tdata:
                     tdata  = tdata.replace("_E_0_P_","")
@@ -198,6 +206,8 @@ class Receive(QThread):
                     self.endRCV.emit()
                     tdata = ''
                     self.counter = 0
+                    self.ser.flushInput()
+                    self.ser.flushOutput()
             time.sleep(0.5)
 
 
