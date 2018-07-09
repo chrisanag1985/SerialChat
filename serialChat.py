@@ -142,7 +142,7 @@ class MainWindow(QMainWindow):
     def sendFile(self):
         if self.checkIfsettingsROK():
             if not self.iswaitingData and not self.send.isRunning() :
-                self.showBar.showMessage("Start Sending...",5000)
+                self.statusBar.showMessage("Start Sending...",5000)
                 fname = QFileDialog(self)
                 fname.setFileMode(QFileDialog.ExistingFile)
 
@@ -176,9 +176,7 @@ class MainWindow(QMainWindow):
     def openHelp(self):
         t = """
         
-        this is a fucking test
-
-        how about this
+        This is a help text for demo only :P
         !!!
 
 
@@ -261,7 +259,10 @@ class MainWindow(QMainWindow):
         self.counter = 0
         if self.receive.type == 'msg':
             tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
-            tt += self.reassembleData(self.receive.data)
+            xxxx= self.reassembleData(self.receive.data)
+            if type(xxxx) == str:
+                xxxx = xxxx.decode('utf-8')
+            tt += xxxx
          
         elif self.receive.type == 'file':
            with open(self.default_save_folder+str('/')+self.receive.filename,'w') as f:
