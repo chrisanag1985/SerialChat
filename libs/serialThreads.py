@@ -44,6 +44,7 @@ class Send(QThread):
         self.ser = parent.serial_port 
         self.interval_time = parent.intervaltime
         self.progressbar = parent.progressBar
+        self.parent = parent
 
 
     def run(self):
@@ -55,6 +56,8 @@ class Send(QThread):
         remain = full_size%1024
         size = 1024
         t2s = ''
+        if self.parent.acp127:
+            t2s = "VZCZC "
         sending_data = {}
         sending_data['type'] = self.type 
         sending_data['filename'] = self.filename 
@@ -62,8 +65,11 @@ class Send(QThread):
         sending_data['size'] = full_size
         sending_data['pieces'] = pieces
         sending_data['remain'] = remain
-        t2s = json.dumps(sending_data)
+        t2s += json.dumps(sending_data)
         t2s += "_E_s_F_"
+        if self.parent.acp127:
+            t2s += " NNNN"
+            print(t2s)
         self.ser.write(t2s)
         self.ser.flush()
         time.sleep(3) 
@@ -75,12 +81,16 @@ class Send(QThread):
             if i== pieces and remain !=0:
 
                 t2s = ''
+                if self.parent.acp127:
+                    t2s = "VZCZC "
                 sending_data = {}
                 texttmp = self.text[-(remain):]
                 self.counter += len(texttmp)
                 sending_data['data_remain'] = base64.b64encode(texttmp)
-                t2s = json.dumps(sending_data)
+                t2s += json.dumps(sending_data)
                 t2s += "_E_0_F_"
+                if self.parent.acp127:
+                    t2s += " NNNN"
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.sendData.emit(self.counter)
@@ -89,9 +99,13 @@ class Send(QThread):
                 self.ser.flushOutput()
             elif i == pieces and remain == 0:
                 t2s = ''
+                if self.parent.acp127:
+                    t2s = "VZCZC "
                 sending_data['data_remain'] = base64.b64encode("_")
-                t2s = json.dumps(sending_data)
+                t2s += json.dumps(sending_data)
                 t2s += "_E_0_F_"
+                if self.parent.acp127:
+                    t2s += " NNNN"
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.endData.emit()
@@ -99,13 +113,16 @@ class Send(QThread):
                 self.ser.flushOutput()
             else:
                 t2s = ''
+                if self.parent.acp127:
+                    t2s = "VZCZC "
                 sending_data = {}
                 texttmp = self.text[size*i:size*(i+1)]
                 self.counter += len(texttmp)
                 sending_data['data_'+str(i)] =  base64.b64encode(texttmp)
-                t2s = json.dumps(sending_data)
+                t2s += json.dumps(sending_data)
                 t2s += "_E_0_P_"
-                
+                if self.parent.acp127:
+                    t2s += " NNNN"
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.sendData.emit(self.counter)
@@ -157,9 +174,12 @@ class Receive(QThread):
                     tdata += self.ser.read(iswait) 
                 if "_E_s_F_" in tdata:
                     #self.emit(SIGNAL('catchESF(str)'),tdata)
-                    self.catchESF.emit(tdata)
+                    if self.parent.acp127 :
+                        tdata = tdata.replace("VZCZC ","")
+                        tdata = tdata.replace(" NNNN","")
 
                     tdata = tdata.replace("_E_s_F_","")
+                    self.catchESF.emit(tdata)
                     try:
                         tdata = json.loads(tdata)
                         self.size = tdata['size']
@@ -174,6 +194,9 @@ class Receive(QThread):
                         tdata=''
 
                 if "_E_0_P_" in tdata:
+                    if self.parent.acp127 :
+                        tdata = tdata.replace("VZCZC ","")
+                        tdata = tdata.replace(" NNNN","")
                     tdata  = tdata.replace("_E_0_P_","")
                     #lenofdata = len(tdata)
                     tdata = json.loads(tdata) 
@@ -190,6 +213,9 @@ class Receive(QThread):
                     tdata = ''
 
                 if "_E_0_F_" in tdata:
+                    if self.parent.acp127 :
+                        tdata = tdata.replace("VZCZC ","")
+                        tdata = tdata.replace(" NNNN","")
                     tdata  = tdata.replace("_E_0_F_","")
                     tdata = json.loads(tdata) 
                     key,value = tdata.popitem() 

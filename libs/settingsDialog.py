@@ -1,6 +1,7 @@
 from PySide.QtCore import *
 from PySide.QtGui import *
 import libserial 
+import ConfigParser
 
 
 serial_speeds = ["2400","4800","9600","19200"]
@@ -23,6 +24,9 @@ class SettingsWindow(QDialog):
         self.parent = parent 
         self.lib = libserial.initApp(self)
 
+        self.configparser = ConfigParser.ConfigParser()
+        self.configparser.read("resources/profiles/profiles.ini")
+
         self.setWindowTitle('SerialChat Settings')
 
         self.buttonbox = QDialogButtonBox( QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -39,6 +43,10 @@ class SettingsWindow(QDialog):
         
         if self.parent.serial_port != None:
             self.serialDropDown.setCurrentIndex(self.serialvalues.index(self.parent.serial_port.name))
+
+        self.profiles = QComboBox()
+        for profile in self.configparser.sections():
+            self.profiles.addItem(profile)
 
         self.intervaltime = QLineEdit(str(self.parent.intervaltime))
 
@@ -87,12 +95,18 @@ class SettingsWindow(QDialog):
         self.hBoxLayout.addWidget(self.buttondir)
         self.hBoxContainer = QWidget()
         self.hBoxContainer.setLayout(self.hBoxLayout)
+
+        self.enableACP127 = QCheckBox()
+        self.enableACP127.stateChanged.connect(self.enableFuncACP127)
+        if self.parent.acp127  :
+            self.enableACP127.setChecked(True)
         
         
 
         
         self.grid = QFormLayout()
         self.grid.addRow("Serial:",self.serialDropDown)
+        self.grid.addRow("Profile:",self.profiles)
         self.grid.addRow("Interval Time:",self.intervaltime)
         self.grid.addRow("Custom Serial Settings",self.customsettings)
         self.grid.addRow("Serial Speed(baud):",self.serialspeed)
@@ -100,6 +114,7 @@ class SettingsWindow(QDialog):
         self.grid.addRow("Stop Bits:",self.stopbits)
         self.grid.addRow("Parity:",self.parity)
         self.grid.addRow("Flow Control:",self.flowcontrol)
+        self.grid.addRow("Enable ACP-127",self.enableACP127)
         self.grid.addRow("Nickname:",self.nickname)
         self.grid.addRow("Save File Folder:",self.hBoxContainer)
         self.grid.addRow("",self.buttonbox)
@@ -116,6 +131,15 @@ class SettingsWindow(QDialog):
         if fname.exec_():
             filename = fname.selectedFiles()[0]
             self.savefolder.setText(filename)
+
+
+    def enableFuncACP127(self):
+        if self.enableACP127.isChecked():
+            print("enable acp-127")
+            self.parent.acp127 = True
+        else:
+            print("disable acp-127")
+            self.parent.acp127 = False
             
         
 
@@ -128,7 +152,30 @@ class SettingsWindow(QDialog):
         if self.savefolder.text() != "" :
             self.parent.default_save_folder = self.savefolder.text()
         self.parent.intervaltime = int(self.intervaltime.text())
-        if self.customsettings.isChecked():
+        if self.profiles.currentText() != 'None':
+            print "profile choosed"
+            section = self.profiles.currentText()
+            interval = self.configparser.get(section,"interval")
+            serialspeed = self.configparser.get(section,"serialspeed") 
+            bytesize = self.configparser.get(section,"bytesize")
+            stopbits = self.configparser.get(section,"stopbits")
+            parity = self.configparser.get(section,"parity") 
+            x_control = self.configparser.get(section,"xonxoff") 
+            r_control = self.configparser.get(section,"rtscts") 
+
+            if self.parent.receive == None:
+                res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=serialspeed,bytesize=bytesize,stopbits=stopbits,parity=parity, xonxoff = x_control , rtscts = r_control)
+            else:
+                self.parent.receive.loopRun = False
+                self.parent.receive.wait()
+                self.parent.receive = None
+                res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=serialspeed,bytesize=bytesize,stopbits=stopbits,parity=parity, xonxoff = x_control , rtscts = r_control)
+            
+            
+
+
+
+        elif self.customsettings.isChecked():
 
             if  self.flowcontrol.currentText() ==  "XON/XOFF":
                 x_control = True

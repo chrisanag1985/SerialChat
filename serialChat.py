@@ -37,6 +37,7 @@ class MainWindow(QMainWindow):
         self.iswaitingData = False
         self.receive = None
         self.send = None
+        self.acp127 = False
 
 
         
@@ -284,7 +285,6 @@ class MainWindow(QMainWindow):
     @Slot()
     def catchESF(self,specs):
         self.statusBar.showMessage("Receiving Data...",10000)
-        specs = specs.replace("_E_s_F_","")
         specs = json.loads(specs)
         self.progressBar.setMaximum( int(specs['size']))
         self.progressBar.setMinimum(  0)
