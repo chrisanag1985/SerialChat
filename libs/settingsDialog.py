@@ -152,7 +152,7 @@ class SettingsWindow(QDialog):
         if self.savefolder.text() != "" :
             self.parent.default_save_folder = self.savefolder.text()
         self.parent.intervaltime = int(self.intervaltime.text())
-        if self.profiles.currentText() != 'None':
+        if self.profiles.currentText() != 'None' and not self.customsettings.isChecked():
             section = self.profiles.currentText()
             interval = self.configparser.get(section,"interval")
             serialspeed = self.configparser.get(section,"serialspeed") 
@@ -225,6 +225,8 @@ class SettingsWindow(QDialog):
                 self.flowcontrol.setCurrentIndex(flow_control_values.index("RTS/CTS"))
             else:
                 self.flowcontrol.setCurrentIndex(flow_control_values.index("None"))
+            if self.configparser.get(section,"acp127") == "True" :
+                self.enableACP127.setChecked(True)
         elif self.profiles.currentText() == "None":
             self.serialspeed.setCurrentIndex(serial_speeds.index('9600'))
             self.intervaltime.setText(str(self.parent.intervaltime))
@@ -232,6 +234,7 @@ class SettingsWindow(QDialog):
             self.stopbits.setCurrentIndex(stop_values.index('1'))
             self.parity.setCurrentIndex(parity_values.index('None'))
             self.flowcontrol.setCurrentIndex(flow_control_values.index('None'))
+            self.enableACP127.setChecked(False)
             
             
 
