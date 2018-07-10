@@ -45,6 +45,8 @@ class SettingsWindow(QDialog):
             self.serialDropDown.setCurrentIndex(self.serialvalues.index(self.parent.serial_port.name))
 
         self.profiles = QComboBox()
+        self.profiles.addItem("None")
+        self.profiles.currentIndexChanged.connect(self.changeCustomSettingsOnProfile)
         for profile in self.configparser.sections():
             self.profiles.addItem(profile)
 
@@ -98,7 +100,7 @@ class SettingsWindow(QDialog):
 
         self.enableACP127 = QCheckBox()
         self.enableACP127.stateChanged.connect(self.enableFuncACP127)
-        if self.parent.acp127  :
+        if self.parent.acp127:
             self.enableACP127.setChecked(True)
         
         
@@ -135,10 +137,8 @@ class SettingsWindow(QDialog):
 
     def enableFuncACP127(self):
         if self.enableACP127.isChecked():
-            print("enable acp-127")
             self.parent.acp127 = True
         else:
-            print("disable acp-127")
             self.parent.acp127 = False
             
         
@@ -153,7 +153,6 @@ class SettingsWindow(QDialog):
             self.parent.default_save_folder = self.savefolder.text()
         self.parent.intervaltime = int(self.intervaltime.text())
         if self.profiles.currentText() != 'None':
-            print "profile choosed"
             section = self.profiles.currentText()
             interval = self.configparser.get(section,"interval")
             serialspeed = self.configparser.get(section,"serialspeed") 
@@ -209,6 +208,33 @@ class SettingsWindow(QDialog):
             self.parent.statusBar.showMessage("Serial Interface %s has started..."%self.parent.serial_port.port)
         else:
             print("Sth else just happend...")
+
+
+    def changeCustomSettingsOnProfile(self):
+        if self.profiles.currentText() != 'None':
+
+            section = self.profiles.currentText()
+            self.intervaltime.setText(self.configparser.get(section,"interval"))
+            self.serialspeed.setCurrentIndex( serial_speeds.index( self.configparser.get(section,"serialspeed") ))
+            self.databits.setCurrentIndex( bytesize_values.index(int(self.configparser.get(section,"bytesize"))))
+            self.stopbits.setCurrentIndex(stop_values.index( self.configparser.get(section,"stopbits")))
+            self.parity.setCurrentIndex (parity_values.index(self.configparser.get(section,"parity") ))
+            if self.configparser.get(section,"xonxoff") == 'True' :
+                self.flowcontrol.setCurrentIndex(flow_control_values.index("XON/XOFF"))
+            elif self.configparser.get(section,"rtscts") == 'True':
+                self.flowcontrol.setCurrentIndex(flow_control_values.index("RTS/CTS"))
+            else:
+                self.flowcontrol.setCurrentIndex(flow_control_values.index("None"))
+        elif self.profiles.currentText() == "None":
+            self.serialspeed.setCurrentIndex(serial_speeds.index('9600'))
+            self.intervaltime.setText(str(self.parent.intervaltime))
+            self.databits.setCurrentIndex(bytesize_values.index(8))
+            self.stopbits.setCurrentIndex(stop_values.index('1'))
+            self.parity.setCurrentIndex(parity_values.index('None'))
+            self.flowcontrol.setCurrentIndex(flow_control_values.index('None'))
+            
+            
+
         
         
 
