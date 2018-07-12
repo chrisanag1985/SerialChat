@@ -25,7 +25,7 @@ class SettingsWindow(QDialog):
         self.lib = libserial.initApp(self)
 
         self.configparser = ConfigParser.ConfigParser()
-        self.configparser.read("resources/profiles/profiles.ini")
+        self.configparser.read("config/profiles/profiles.ini")
 
         self.setWindowTitle('SerialChat Settings')
 
@@ -212,6 +212,7 @@ class SettingsWindow(QDialog):
 
     def changeCustomSettingsOnProfile(self):
         if self.profiles.currentText() != 'None':
+            #TODO: insert acp127 checkbox functionality
 
             section = self.profiles.currentText()
             self.intervaltime.setText(self.configparser.get(section,"interval"))

@@ -69,7 +69,6 @@ class Send(QThread):
         t2s += "_E_s_F_"
         if self.parent.acp127:
             t2s += " NNNN"
-            print(t2s)
         self.ser.write(t2s)
         self.ser.flush()
         time.sleep(3) 
