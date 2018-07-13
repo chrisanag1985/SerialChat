@@ -23,6 +23,10 @@ class SettingsWindow(QDialog):
         super(self.__class__,self).__init__(parent)
         self.parent = parent 
         self.lib = libserial.initApp(self)
+        if self.parent.receive is not None:
+            self.boolConfigIsOK = True 
+        else:
+            self.boolConfigIsOK = False
 
         self.configparser = ConfigParser.ConfigParser()
         self.configparser.read("config/profiles/profiles.ini")
@@ -61,31 +65,54 @@ class SettingsWindow(QDialog):
         self.serialspeed = QComboBox()
         for sp in serial_speeds:
             self.serialspeed.addItem(str(sp))
-        self.serialspeed.setCurrentIndex(serial_speeds.index('9600'))
+        if self.boolConfigIsOK:
+            self.serialspeed.setCurrentIndex(serial_speeds.index(str(self.parent.serial_port.baudrate)))
+        else:
+            self.serialspeed.setCurrentIndex(serial_speeds.index('9600'))
         self.serialspeed.setDisabled(True)
 
         self.databits = QComboBox()
         for db in bytesize_values:
             self.databits.addItem(str(db))
-        self.databits.setCurrentIndex(bytesize_values.index(8))
+        if self.boolConfigIsOK :
+            self.databits.setCurrentIndex(bytesize_values.index(self.parent.serial_port.bytesize))
+        else:
+            self.databits.setCurrentIndex(bytesize_values.index(8))
         self.databits.setDisabled(True)
 
         self.stopbits = QComboBox()
         for sb in stop_values:
             self.stopbits.addItem(str(sb))
-        self.stopbits.setCurrentIndex(stop_values.index('1'))
+        if self.boolConfigIsOK :
+            sb =  str(self.parent.serial_port.stopbits).replace('.',',')
+            self.stopbits.setCurrentIndex(stop_values.index(str(sb)))
+        else:
+            self.stopbits.setCurrentIndex(stop_values.index('1'))
         self.stopbits.setDisabled(True)
 
         self.parity = QComboBox()
         for par in parity_values:
             self.parity.addItem(str(par))
-        self.parity.setCurrentIndex(parity_values.index("None"))
+        if self.boolConfigIsOK :
+            table = { 'O':'Odd','E':'Even','N':'None'}
+            xxx = [ item for key , item in table.items() if self.parent.serial_port.parity == key]
+            self.parity.setCurrentIndex(parity_values.index(xxx[0]))
+        else:
+            self.parity.setCurrentIndex(parity_values.index("None"))
         self.parity.setDisabled(True)
 
         self.flowcontrol = QComboBox()
         for fc in flow_control_values:
             self.flowcontrol.addItem(str(fc))
-        self.flowcontrol.setCurrentIndex(parity_values.index("None"))
+        if self.boolConfigIsOK :
+            if self.parent.serial_port.xonxoff :
+                self.flowcontrol.setCurrentIndex(flow_control_values.index("XON/XOFF"))
+            elif self.parent.serial_port.rtscts:
+                self.flowcontrol.setCurrentIndex(flow_control_values.index("RTS/CTS"))
+            else:
+                self.flowcontrol.setCurrentIndex(flow_control_values.index("None"))
+        else:
+            self.flowcontrol.setCurrentIndex(parity_values.index("None"))
         self.flowcontrol.setDisabled(True)
         
         self.nickname = QLineEdit(self.parent.nickname)
@@ -149,7 +176,9 @@ class SettingsWindow(QDialog):
         else:
             self.parent.acp127 = False
             
-        
+    
+
+
 
 
     def applyChanges(self):
@@ -220,7 +249,6 @@ class SettingsWindow(QDialog):
 
     def changeCustomSettingsOnProfile(self):
         if self.profiles.currentText() != 'None':
-            #TODO: insert acp127 checkbox functionality
 
             section = self.profiles.currentText()
             self.intervaltime.setText(self.configparser.get(section,"interval"))

@@ -20,6 +20,7 @@ nickname = "Guest"
 default_save_folder = os.path.expanduser('~')
 serial_port = None
 intervaltime = 6
+choosen_profile = None
 
 
 
@@ -38,6 +39,7 @@ class MainWindow(QMainWindow):
         self.receive = None
         self.send = None
         self.acp127 = False
+        self.choosen_profile = choosen_profile
 
 
         
@@ -239,6 +241,7 @@ class MainWindow(QMainWindow):
     def startRCV(self,x):
         self.iswaitingData = True
         
+    #TODO must be in the Receice Class file !!! NOT HERE
     def reassembleData(self,rdata):
 
         end_text = ''
