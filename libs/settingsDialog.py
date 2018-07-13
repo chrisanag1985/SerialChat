@@ -27,6 +27,9 @@ class SettingsWindow(QDialog):
         self.configparser = ConfigParser.ConfigParser()
         self.configparser.read("config/profiles/profiles.ini")
 
+        self.settingsparser = ConfigParser.ConfigParser()
+        self.settingsparser.read('config/settings.ini')
+
         self.setWindowTitle('SerialChat Settings')
 
         self.buttonbox = QDialogButtonBox( QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -86,8 +89,13 @@ class SettingsWindow(QDialog):
         self.flowcontrol.setDisabled(True)
         
         self.nickname = QLineEdit(self.parent.nickname)
+        if self.settingsparser.has_option('default','nickname'):
+            self.nickname.setText(self.settingsparser.get('default','nickname'))
         
         self.savefolder = QLineEdit(self.parent.default_save_folder)
+        if self.settingsparser.has_option('default','default_save_folder'):
+            self.savefolder.setText(self.settingsparser.get('default','default_save_folder'))
+
         self.buttondir = QPushButton()
         self.buttondir.setIcon(QIcon(icons_folder+'folder.png'))
         self.buttondir.clicked.connect(self.choose_save_dir)
