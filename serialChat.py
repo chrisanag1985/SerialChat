@@ -41,6 +41,10 @@ class MainWindow(QMainWindow):
         self.acp127 = False
         self.choosen_profile = choosen_profile
 
+        self.timer = QTimer()
+        #set to 1 minute
+        self.timer.setInterval(20000) 
+        self.timer.timeout.connect(self.clearJunkData)
 
         
         self.menuBar = QMenuBar()
@@ -135,6 +139,13 @@ class MainWindow(QMainWindow):
             self.receive.catchEOP.connect(self.catchEOP)
 
             self.receive.start()
+
+
+    def clearJunkData(self):
+        self.statusBar.showMessage("Junk Data Cleared...",5000)
+        self.iswaitingData = False 
+        self.timer.stop()
+        self.receive.clear_vars()
 
 
 
@@ -239,6 +250,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def startRCV(self,x):
+        self.timer.start()
         self.iswaitingData = True
         
     #TODO must be in the Receice Class file !!! NOT HERE
@@ -260,6 +272,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def endRCV(self):
+        self.timer.stop()
         self.statusBar.showMessage("Receiving Data has ended...",5000)
         self.iswaitingData = False
         self.counter = 0
