@@ -65,7 +65,10 @@ class Send(QThread):
         sending_data['size'] = full_size
         sending_data['pieces'] = pieces
         sending_data['remain'] = remain
-        t2s += json.dumps(sending_data)
+        try:
+            t2s += json.dumps(sending_data)
+        except Exception as e:
+            print(e)
         t2s += "_E_s_F_"
         if self.parent.acp127:
             t2s += " NNNN"
@@ -86,7 +89,10 @@ class Send(QThread):
                 texttmp = self.text[-(remain):]
                 self.counter += len(texttmp)
                 sending_data['data_remain'] = base64.b64encode(texttmp)
-                t2s += json.dumps(sending_data)
+                try:
+                    t2s += json.dumps(sending_data)
+                except Exception as e:
+                    print(e) 
                 t2s += "_E_0_F_"
                 if self.parent.acp127:
                     t2s += " NNNN"
@@ -101,7 +107,10 @@ class Send(QThread):
                 if self.parent.acp127:
                     t2s = "VZCZC "
                 sending_data['data_remain'] = base64.b64encode("_")
-                t2s += json.dumps(sending_data)
+                try:
+                    t2s += json.dumps(sending_data)
+                except Exception as e:
+                    print(e)
                 t2s += "_E_0_F_"
                 if self.parent.acp127:
                     t2s += " NNNN"
@@ -118,7 +127,10 @@ class Send(QThread):
                 texttmp = self.text[size*i:size*(i+1)]
                 self.counter += len(texttmp)
                 sending_data['data_'+str(i)] =  base64.b64encode(texttmp)
-                t2s += json.dumps(sending_data)
+                try:
+                    t2s += json.dumps(sending_data)
+                except Exception as e:
+                    print(e)
                 t2s += "_E_0_P_"
                 if self.parent.acp127:
                     t2s += " NNNN"
@@ -202,9 +214,9 @@ class Receive(QThread):
                         self.tdata = self.tdata.replace(" NNNN","")
                     self.tdata  = self.tdata.replace("_E_0_P_","")
                     #lenofdata = len(self.tdata)
-                    self.tdata = json.loads(self.tdata) 
-                    key,value = self.tdata.popitem() 
                     try:
+                        self.tdata = json.loads(self.tdata) 
+                        key,value = self.tdata.popitem() 
                         value = base64.b64decode(value)
                     except Exception:
                         print("Problem... b64")
@@ -220,9 +232,9 @@ class Receive(QThread):
                         self.tdata = self.tdata.replace("VZCZC ","")
                         self.tdata = self.tdata.replace(" NNNN","")
                     self.tdata  = self.tdata.replace("_E_0_F_","")
-                    self.tdata = json.loads(self.tdata) 
-                    key,value = self.tdata.popitem() 
                     try:
+                        self.tdata = json.loads(self.tdata) 
+                        key,value = self.tdata.popitem() 
                         value = base64.b64decode(value)
                     except Exception:
                         print("Problem...b64")
