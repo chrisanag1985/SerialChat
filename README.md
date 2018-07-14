@@ -29,9 +29,11 @@ pip:
 pip2 install pyserial
 ```
 
-**!!!To work on WIN XP the version of the pyserial must be 2.7**
+**!!!To work and on WIN XP the version of the pyserial must be 2.7**
+
 **!!!So the SerialChat uses pyserial v2.7**
 
+[tested on] winxp ,win7 ,win10 ,linux
 
 ## Installation
 There is no need for installation process.
