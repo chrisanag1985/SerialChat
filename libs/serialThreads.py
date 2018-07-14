@@ -44,6 +44,7 @@ class Send(QThread):
         self.ser = parent.serial_port 
         self.interval_time = parent.intervaltime
         self.progressbar = parent.progressBar
+        self.parent = parent
 
 
     def run(self):
@@ -55,6 +56,8 @@ class Send(QThread):
         remain = full_size%1024
         size = 1024
         t2s = ''
+        if self.parent.acp127:
+            t2s = "VZCZC "
         sending_data = {}
         sending_data['type'] = self.type 
         sending_data['filename'] = self.filename 
@@ -62,8 +65,13 @@ class Send(QThread):
         sending_data['size'] = full_size
         sending_data['pieces'] = pieces
         sending_data['remain'] = remain
-        t2s = json.dumps(sending_data)
+        try:
+            t2s += json.dumps(sending_data)
+        except Exception as e:
+            print(e)
         t2s += "_E_s_F_"
+        if self.parent.acp127:
+            t2s += " NNNN"
         self.ser.write(t2s)
         self.ser.flush()
         time.sleep(3) 
@@ -75,12 +83,19 @@ class Send(QThread):
             if i== pieces and remain !=0:
 
                 t2s = ''
+                if self.parent.acp127:
+                    t2s = "VZCZC "
                 sending_data = {}
                 texttmp = self.text[-(remain):]
                 self.counter += len(texttmp)
                 sending_data['data_remain'] = base64.b64encode(texttmp)
-                t2s = json.dumps(sending_data)
+                try:
+                    t2s += json.dumps(sending_data)
+                except Exception as e:
+                    print(e) 
                 t2s += "_E_0_F_"
+                if self.parent.acp127:
+                    t2s += " NNNN"
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.sendData.emit(self.counter)
@@ -89,9 +104,16 @@ class Send(QThread):
                 self.ser.flushOutput()
             elif i == pieces and remain == 0:
                 t2s = ''
+                if self.parent.acp127:
+                    t2s = "VZCZC "
                 sending_data['data_remain'] = base64.b64encode("_")
-                t2s = json.dumps(sending_data)
+                try:
+                    t2s += json.dumps(sending_data)
+                except Exception as e:
+                    print(e)
                 t2s += "_E_0_F_"
+                if self.parent.acp127:
+                    t2s += " NNNN"
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.endData.emit()
@@ -99,13 +121,19 @@ class Send(QThread):
                 self.ser.flushOutput()
             else:
                 t2s = ''
+                if self.parent.acp127:
+                    t2s = "VZCZC "
                 sending_data = {}
                 texttmp = self.text[size*i:size*(i+1)]
                 self.counter += len(texttmp)
                 sending_data['data_'+str(i)] =  base64.b64encode(texttmp)
-                t2s = json.dumps(sending_data)
+                try:
+                    t2s += json.dumps(sending_data)
+                except Exception as e:
+                    print(e)
                 t2s += "_E_0_P_"
-                
+                if self.parent.acp127:
+                    t2s += " NNNN"
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.sendData.emit(self.counter)
@@ -134,12 +162,16 @@ class Receive(QThread):
         self.ser = parent.serial_port 
         self.parent = parent
         self.loopRun = True
+        self.tdata = ''
+
 
     def clear_vars(self):
         self.data = {}
+        self.tdata = ''
+
 
     def run(self):
-        tdata = ''
+        self.tdata = ''
         self.counter = 0
         while self.loopRun:
         
@@ -151,34 +183,40 @@ class Receive(QThread):
                 self.startRCV.emit(self.ser.inWaiting())
                 if iswait >1024:
                     iswait = 1024
-                if tdata == '':
-                    tdata = self.ser.read(iswait) 
+                if self.tdata == '':
+                    self.tdata = self.ser.read(iswait) 
                 else:
-                    tdata += self.ser.read(iswait) 
-                if "_E_s_F_" in tdata:
-                    #self.emit(SIGNAL('catchESF(str)'),tdata)
-                    self.catchESF.emit(tdata)
+                    self.tdata += self.ser.read(iswait) 
+                if "_E_s_F_" in self.tdata:
+                    #self.emit(SIGNAL('catchESF(str)'),self.tdata)
+                    if self.parent.acp127 :
+                        self.tdata = self.tdata.replace("VZCZC ","")
+                        self.tdata = self.tdata.replace(" NNNN","")
 
-                    tdata = tdata.replace("_E_s_F_","")
+                    self.tdata = self.tdata.replace("_E_s_F_","")
+                    self.catchESF.emit(self.tdata)
                     try:
-                        tdata = json.loads(tdata)
-                        self.size = tdata['size']
-                        self.filename = tdata['filename']
-                        self.nickname = tdata['nickname']
-                        self.pieces = tdata['pieces']
-                        self.remain = tdata['remain']
-                        self.type = tdata['type']
-                        tdata=''
+                        self.tdata = json.loads(self.tdata)
+                        self.size = self.tdata['size']
+                        self.filename = self.tdata['filename']
+                        self.nickname = self.tdata['nickname']
+                        self.pieces = self.tdata['pieces']
+                        self.remain = self.tdata['remain']
+                        self.type = self.tdata['type']
+                        self.tdata=''
                     except Exception:
                         print(Exception)
-                        tdata=''
+                        self.tdata=''
 
-                if "_E_0_P_" in tdata:
-                    tdata  = tdata.replace("_E_0_P_","")
-                    #lenofdata = len(tdata)
+                if "_E_0_P_" in self.tdata:
+                    if self.parent.acp127 :
+                        self.tdata = self.tdata.replace("VZCZC ","")
+                        self.tdata = self.tdata.replace(" NNNN","")
+                    self.tdata  = self.tdata.replace("_E_0_P_","")
+                    #lenofdata = len(self.tdata)
                     try:
-                        tdata = json.loads(tdata) 
-                        key,value = tdata.popitem() 
+                        self.tdata = json.loads(self.tdata) 
+                        key,value = self.tdata.popitem() 
                         value = base64.b64decode(value)
                     except Exception:
                         print("Problem... b64")
@@ -187,13 +225,16 @@ class Receive(QThread):
                     lenofdata = len(value)
                     #self.emit(SIGNAL('catchEOP(int)'),lenofdata)
                     self.catchEOP.emit(lenofdata)
-                    tdata = ''
+                    self.tdata = ''
 
-                if "_E_0_F_" in tdata:
-                    tdata  = tdata.replace("_E_0_F_","")
+                if "_E_0_F_" in self.tdata:
+                    if self.parent.acp127 :
+                        self.tdata = self.tdata.replace("VZCZC ","")
+                        self.tdata = self.tdata.replace(" NNNN","")
+                    self.tdata  = self.tdata.replace("_E_0_F_","")
                     try:
-                        tdata = json.loads(tdata) 
-                        key,value = tdata.popitem() 
+                        self.tdata = json.loads(self.tdata) 
+                        key,value = self.tdata.popitem() 
                         value = base64.b64decode(value)
                     except Exception:
                         print("Problem...b64")
@@ -204,97 +245,8 @@ class Receive(QThread):
                     self.catchEOP.emit(lenofdata)
                     #self.emit(SIGNAL('endRCV()'))
                     self.endRCV.emit()
-                    tdata = ''
+                    self.tdata = ''
                     self.counter = 0
                     self.ser.flushInput()
                     self.ser.flushOutput()
             time.sleep(0.5)
-
-
-
-
-#class mainWindow(QMainWindow):
-#
-#
-#
-#    def __init__(self):
-#        super(MainWindow,self).__init__()
-#
-#        self.iswaitingData = False
-#        self.counter = 0
-#
-#
-#        self.layout = QVBoxLayout()
-#
-#        self.button2 = QPushButton("Send")
-#        self.thread2 = Send()
-#        self.receiveThread = Receive()
-#        self.connect(self.receiveThread,SIGNAL("startRCV(int)"),self.printMsg)
-#        self.connect(self.receiveThread,SIGNAL("finished()"),self.done1)
-#        self.connect(self.receiveThread,SIGNAL("endRCV()"),self.done2)
-#        self.connect(self.receiveThread,SIGNAL("catchESF()"),self.catchESF)
-#        self.connect(self.receiveThread,SIGNAL("catchEOP(int)"),self.catchEOP)
-#        self.button2.pressed.connect(self.startT2)
-#
-#
-#        self.buttonrunning = QPushButton("Running?")
-#        self.buttonrunning.pressed.connect(self.checkrun)
-#
-#
-#        self.layout.addWidget(self.button2)
-#        self.layout.addWidget(self.buttonrunning)
-#
-#
-#
-#        w = QWidget()
-#        w.setLayout(self.layout)
-#        self.setCentralWidget(w)
-#        self.show()
-#
-#        self.receiveThread.start()
-#
-#
-#
-#    def startT2(self):
-#
-#        if not self.iswaitingData:
-#            self.thread2.text = text2
-#            self.thread2.start()
-#            
-#        else:
-#            print("Cannot Send yet ... receiving...")
-#
-#    def catchEOP(self,len_of_data):
-#        print("catch %i"%len_of_data)
-#        self.counter +=  int(len_of_data)
-#        print(self.counter)
-#
-#
-#
-#    def catchESF(self):
-#        print("Found ESF(end of spec file)")
-#
-#    def done1(self):
-#        print("receive terminated")
-#
-#       
-#    def done2(self):
-#        self.iswaitingData = False
-#        self.counter = 0
-#        print("Ended receiving msg")
-#        print(self.receiveThread.data)
-#
-#        
-#
-#    def printMsg(self,a):
-#        self.iswaitingData = True
-#        print("strt rcv "+str(a))
-#
-#    def checkrun(self):
-#        print("send is running -> %s"%self.thread2.isRunning())
-#        print("receive is  running -> %s"%self.receiveThread.isRunning())
-#        print("is waiting data %s"%self.iswaitingData)
-#
-#app = QApplication([])
-#window = MainWindow()
-#app.exec_()

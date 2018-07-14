@@ -20,6 +20,8 @@ nickname = "Guest"
 default_save_folder = os.path.expanduser('~')
 serial_port = None
 intervaltime = 6
+choosen_profile = "None"
+custom_settings = False
 
 
 
@@ -37,7 +39,14 @@ class MainWindow(QMainWindow):
         self.iswaitingData = False
         self.receive = None
         self.send = None
+        self.acp127 = False
+        self.choosen_profile = choosen_profile
+        self.custom_settings = custom_settings
 
+        self.timer = QTimer()
+        #set to 20 secs 
+        self.timer.setInterval(20000) 
+        self.timer.timeout.connect(self.clearJunkData)
 
         
         self.menuBar = QMenuBar()
@@ -134,6 +143,13 @@ class MainWindow(QMainWindow):
             self.receive.start()
 
 
+    def clearJunkData(self):
+        self.statusBar.showMessage("Junk Data Cleared...",5000)
+        self.iswaitingData = False 
+        self.timer.stop()
+        self.receive.clear_vars()
+
+
 
 
     def openSettings(self):
@@ -198,13 +214,13 @@ class MainWindow(QMainWindow):
     def sendMsg(self):
         if self.checkIfsettingsROK():
             if not self.iswaitingData and not self.send.isRunning():
-                self.statusBar.showMessage("Start Sending...",5000)
 
                 self.send.text = self.inputText.toPlainText()
                 self.send.filename = None
                 self.send.type = 'msg'
                 find = re.search("^\s*$",self.send.text)
                 if not find:
+                    self.statusBar.showMessage("Start Sending...",5000)
                     tt = "[ "+self.nickname+" (me) @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "+self.send.text
                     tmp = QListWidgetItem(tt)
                     tmp.setForeground(QColor('blue'))
@@ -212,6 +228,8 @@ class MainWindow(QMainWindow):
                     self.listWidget.scrollToBottom()
                     self.send.start()
                     self.inputText.clear()
+                else:
+                    self.statusBar.showMessage("Cannot Send an Empty String...",5000)
             elif self.iswaitingData:
                self.statusBar.showMessage("Cannot send yet... Receiving data...",5000)
 
@@ -234,8 +252,10 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def startRCV(self,x):
+        self.timer.start()
         self.iswaitingData = True
         
+    #TODO must be in the Receice Class file !!! NOT HERE
     def reassembleData(self,rdata):
 
         end_text = ''
@@ -254,38 +274,44 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def endRCV(self):
+        self.timer.stop()
         self.statusBar.showMessage("Receiving Data has ended...",5000)
         self.iswaitingData = False
         self.counter = 0
-        if self.receive.type == 'msg':
-            tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
-            xxxx= self.reassembleData(self.receive.data)
-            if type(xxxx) == str:
-                xxxx = xxxx.decode('utf-8')
-            tt += xxxx
-         
-        elif self.receive.type == 'file':
-           with open(self.default_save_folder+str('/')+self.receive.filename,'w') as f:
-               f.write(self.reassembleData(self.receive.data))
-           f.close()
-           tt = "[ Received File from "+self.receive.nickname+"  @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
-           tt += self.default_save_folder+str('/')+self.receive.filename
-           
+        try:
+            if self.receive.type == 'msg':
+                tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
+                xxxx= self.reassembleData(self.receive.data)
+                if type(xxxx) == str:
+                    xxxx = xxxx.decode('utf-8')
+                tt += xxxx
+             
+            elif self.receive.type == 'file':
+               with open(self.default_save_folder+str('/')+self.receive.filename,'w') as f:
+                   f.write(self.reassembleData(self.receive.data))
+               f.close()
+               tt = "[ Received File from "+self.receive.nickname+"  @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
+               tt += self.default_save_folder+str('/')+self.receive.filename
+               
 
-        self.receive.clear_vars()
-        tmp = QListWidgetItem(tt)
-        if self.receive.type=='msg':
-            tmp.setForeground(QColor('green'))
-        elif self.receive.type=='file':
-            tmp.setForeground(QColor('red'))
-        self.listWidget.addItem(tmp)
-        self.listWidget.scrollToBottom()
+            self.receive.clear_vars()
+            tmp = QListWidgetItem(tt)
+            if self.receive.type=='msg':
+                tmp.setForeground(QColor('green'))
+            elif self.receive.type=='file':
+                tmp.setForeground(QColor('red'))
+            self.listWidget.addItem(tmp)
+            self.listWidget.scrollToBottom()
+        except Exception as e:
+            print(e)
 
     @Slot()
     def catchESF(self,specs):
         self.statusBar.showMessage("Receiving Data...",10000)
-        specs = specs.replace("_E_s_F_","")
-        specs = json.loads(specs)
+        try:
+            specs = json.loads(specs)
+        except Exception as e:
+            print(e)
         self.progressBar.setMaximum( int(specs['size']))
         self.progressBar.setMinimum(  0)
         self.progressBar.setValue( 0)
