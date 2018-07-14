@@ -29,6 +29,8 @@ pip:
 pip2 install pyserial
 ```
 
+**!!!To work on WIN XP the version of the pyserial must be 2.7**
+
 
 ## Installation
 There is no need for installation process.
