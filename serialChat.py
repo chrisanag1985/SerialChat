@@ -20,7 +20,8 @@ nickname = "Guest"
 default_save_folder = os.path.expanduser('~')
 serial_port = None
 intervaltime = 6
-choosen_profile = None
+choosen_profile = "None"
+custom_settings = False
 
 
 
@@ -40,9 +41,10 @@ class MainWindow(QMainWindow):
         self.send = None
         self.acp127 = False
         self.choosen_profile = choosen_profile
+        self.custom_settings = custom_settings
 
         self.timer = QTimer()
-        #set to 1 minute
+        #set to 20 secs 
         self.timer.setInterval(20000) 
         self.timer.timeout.connect(self.clearJunkData)
 
@@ -276,34 +278,40 @@ class MainWindow(QMainWindow):
         self.statusBar.showMessage("Receiving Data has ended...",5000)
         self.iswaitingData = False
         self.counter = 0
-        if self.receive.type == 'msg':
-            tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
-            xxxx= self.reassembleData(self.receive.data)
-            if type(xxxx) == str:
-                xxxx = xxxx.decode('utf-8')
-            tt += xxxx
-         
-        elif self.receive.type == 'file':
-           with open(self.default_save_folder+str('/')+self.receive.filename,'w') as f:
-               f.write(self.reassembleData(self.receive.data))
-           f.close()
-           tt = "[ Received File from "+self.receive.nickname+"  @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
-           tt += self.default_save_folder+str('/')+self.receive.filename
-           
+        try:
+            if self.receive.type == 'msg':
+                tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
+                xxxx= self.reassembleData(self.receive.data)
+                if type(xxxx) == str:
+                    xxxx = xxxx.decode('utf-8')
+                tt += xxxx
+             
+            elif self.receive.type == 'file':
+               with open(self.default_save_folder+str('/')+self.receive.filename,'w') as f:
+                   f.write(self.reassembleData(self.receive.data))
+               f.close()
+               tt = "[ Received File from "+self.receive.nickname+"  @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
+               tt += self.default_save_folder+str('/')+self.receive.filename
+               
 
-        self.receive.clear_vars()
-        tmp = QListWidgetItem(tt)
-        if self.receive.type=='msg':
-            tmp.setForeground(QColor('green'))
-        elif self.receive.type=='file':
-            tmp.setForeground(QColor('red'))
-        self.listWidget.addItem(tmp)
-        self.listWidget.scrollToBottom()
+            self.receive.clear_vars()
+            tmp = QListWidgetItem(tt)
+            if self.receive.type=='msg':
+                tmp.setForeground(QColor('green'))
+            elif self.receive.type=='file':
+                tmp.setForeground(QColor('red'))
+            self.listWidget.addItem(tmp)
+            self.listWidget.scrollToBottom()
+        except Exception as e:
+            print(e)
 
     @Slot()
     def catchESF(self,specs):
         self.statusBar.showMessage("Receiving Data...",10000)
-        specs = json.loads(specs)
+        try:
+            specs = json.loads(specs)
+        except Exception as e:
+            print(e)
         self.progressBar.setMaximum( int(specs['size']))
         self.progressBar.setMinimum(  0)
         self.progressBar.setValue( 0)

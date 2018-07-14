@@ -53,14 +53,26 @@ class SettingsWindow(QDialog):
 
         self.profiles = QComboBox()
         self.profiles.addItem("None")
-        self.profiles.currentIndexChanged.connect(self.changeCustomSettingsOnProfile)
+        if self.parent.choosen_profile == "Custom":
+            self.profiles.addItem("Custom")
         for profile in self.configparser.sections():
             self.profiles.addItem(profile)
+        if self.parent.custom_settings:
+            self.profiles.setCurrentIndex(self.profiles.findText('Custom'))
+        elif self.parent.choosen_profile != 'None':
+            self.profiles.setCurrentIndex(self.profiles.findText(self.parent.choosen_profile))
+        else:
+            self.profiles.setCurrentIndex(self.profiles.findText('None'))
 
-        self.intervaltime = QLineEdit(str(self.parent.intervaltime))
+        self.profiles.currentIndexChanged.connect(self.changeCustomSettingsOnProfile)
+        
+
 
         self.customsettings = QCheckBox()
         self.customsettings.stateChanged.connect(self.customSettings)
+
+        self.intervaltime = QLineEdit(str(self.parent.intervaltime))
+        self.intervaltime.setDisabled(True)
          
         self.serialspeed = QComboBox()
         for sp in serial_speeds:
@@ -144,8 +156,8 @@ class SettingsWindow(QDialog):
         self.grid = QFormLayout()
         self.grid.addRow("Serial:",self.serialDropDown)
         self.grid.addRow("Profile:",self.profiles)
-        self.grid.addRow("Interval Time:",self.intervaltime)
         self.grid.addRow("Custom Serial Settings",self.customsettings)
+        self.grid.addRow("Interval Time:",self.intervaltime)
         self.grid.addRow("Serial Speed(baud):",self.serialspeed)
         self.grid.addRow("Data Bits:",self.databits)
         self.grid.addRow("Stop Bits:",self.stopbits)
@@ -184,67 +196,41 @@ class SettingsWindow(QDialog):
     def applyChanges(self):
         
         res = None
+        self.parent.custom_settings = self.customsettings.isChecked()
+        self.parent.choosen_profile = self.profiles.currentText()
+        if self.parent.custom_settings :
+            self.parent.choosen_profile = "Custom"
+            
+        
         if self.nickname.text() != "":
             self.parent.nickname = self.nickname.text()
         if self.savefolder.text() != "" :
             self.parent.default_save_folder = self.savefolder.text()
         self.parent.intervaltime = int(self.intervaltime.text())
-        if self.profiles.currentText() != 'None' and not self.customsettings.isChecked():
-            section = self.profiles.currentText()
-            interval = self.configparser.get(section,"interval")
-            serialspeed = self.configparser.get(section,"serialspeed") 
-            bytesize = self.configparser.get(section,"bytesize")
-            stopbits = self.configparser.get(section,"stopbits")
-            parity = self.configparser.get(section,"parity") 
-            x_control = self.configparser.get(section,"xonxoff") 
-            r_control = self.configparser.get(section,"rtscts") 
-
-            if self.parent.receive == None:
-                res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=serialspeed,bytesize=bytesize,stopbits=stopbits,parity=parity, xonxoff = x_control , rtscts = r_control)
-            else:
-                self.parent.receive.loopRun = False
-                self.parent.receive.wait()
-                self.parent.receive = None
-                res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=serialspeed,bytesize=bytesize,stopbits=stopbits,parity=parity, xonxoff = x_control , rtscts = r_control)
-            
-            
-
-
-
-        elif self.customsettings.isChecked():
-
-            if  self.flowcontrol.currentText() ==  "XON/XOFF":
-                x_control = True
-            else:
-                x_control = False
-
-            if self.flowcontrol.currentText() == "RTS/CTS":
-                r_control = True
-            else:
-                r_control = False
-            if self.parent.receive == None:
-                res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
-            else:
-                self.parent.receive.loopRun = False
-                self.parent.receive.wait()
-                self.parent.receive = None
-                res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
+        if  self.flowcontrol.currentText() ==  "XON/XOFF":
+            x_control = True
         else:
-            if self.parent.receive == None:
-                res = self.lib.set_serial(port=self.serialDropDown.currentText())
-            else:
-                self.parent.receive.loopRun = False
-                self.parent.receive.wait()
-                self.parent.receive = None
-                res = self.lib.set_serial(port=self.serialDropDown.currentText())
+            x_control = False
+
+        if self.flowcontrol.currentText() == "RTS/CTS":
+            r_control = True
+        else:
+            r_control = False
+        if self.parent.receive == None:
+            res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
+        else:
+            self.parent.receive.loopRun = False
+            self.parent.receive.wait()
+            self.parent.receive = None
+            res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
         if type(res) == OSError:
-            self.parent.statusBar.showMessage(str(res))
-        if type(res) != None:
+            self.parent.statusBar.showMessage(str(res),5000)
+        if type(res) != None and type(res) != OSError:
             self.parent.serial_port = res 
             self.parent.startThreads()
             self.parent.statusBar.showMessage("Serial Interface %s has started..."%self.parent.serial_port.port)
         else:
-            print("Sth else just happend...")
+            print("Sth wrong just happend...")
 
 
     def changeCustomSettingsOnProfile(self):
@@ -281,12 +267,14 @@ class SettingsWindow(QDialog):
 
     def customSettings(self):
         if self.customsettings.isChecked():
+            self.intervaltime.setDisabled(False)
             self.serialspeed.setDisabled(False)
             self.databits.setDisabled(False)
             self.stopbits.setDisabled(False)
             self.parity.setDisabled(False)
             self.flowcontrol.setDisabled(False)
         else:
+            self.intervaltime.setDisabled(True)
             self.serialspeed.setDisabled(True)
             self.databits.setDisabled(True)
             self.stopbits.setDisabled(True)
