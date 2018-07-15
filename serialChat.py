@@ -11,6 +11,7 @@ import datetime
 import ntpath
 import base64
 import json
+import ConfigParser
 
 
 
@@ -24,7 +25,44 @@ choosen_profile = "None"
 custom_settings = False
 
 
+settingsparser = ConfigParser.ConfigParser()
+settingsparser.read('config/settings.ini')
 
+time_before_flush_junk_data = int(settingsparser.get("app_settings","time_before_flush_junk_data"))
+time_show_msg_on_statusbar = int(settingsparser.get("app_settings","time_show_msg_on_statusbar"))
+date_format = str(settingsparser.get("app_settings","date_format"))
+
+lang = "GR"
+language = ConfigParser.ConfigParser()
+language.read("resources/languages/"+lang+".ini")
+
+MENU_SETTINGS = language.get(lang,"MENU_SETTINGS").decode('utf-8')
+MENU_OPEN_SETTINGS = language.get(lang,"MENU_OPEN_SETTINGS").decode('utf-8')
+MENU_SEND_FILE = language.get(lang,"MENU_SEND_FILE").decode('utf-8')
+MENU_CHOOSE_FILE_TO_SEND = language.get(lang,"MENU_CHOOSE_FILE_TO_SEND").decode('utf-8')
+MENU_HELP = language.get(lang,"MENU_HELP").decode('utf-8')
+MENU_MANUAL = language.get(lang,"MENU_MANUAL").decode('utf-8')
+MENU_ABOUT = language.get(lang,"MENU_ABOUT").decode('utf-8')
+MENU_EXIT = language.get(lang,"MENU_EXIT").decode('utf-8')
+MENU_EXIT_APP = language.get(lang,"MENU_EXIT_APP").decode('utf-8')
+BUTTON_SEND = language.get(lang,"BUTTON_SEND").decode('utf-8')
+BUTTON_CLEAR = language.get(lang,"BUTTON_CLEAR").decode('utf-8')
+MSG_STARTED = language.get(lang,"MSG_STARTED").decode('utf-8')
+MSG_STARTING_THREADS = language.get(lang,"MSG_STARTING_THREADS").decode('utf-8')
+MSG_JUNK_DATA_CLEARED = language.get(lang,"MSG_JUNK_DATA_CLEARED").decode('utf-8')
+MSG_START_SENDING = language.get(lang,"MSG_START_SENDING").decode('utf-8')
+MSG_SENT_FILE = language.get(lang,"MSG_SENT_FILE").decode('utf-8')
+MSG_CHECK_YOUR_SETTINGS = language.get(lang,"MSG_CHECK_YOUR_SETTINGS").decode('utf-8')
+MSG_ME = language.get(lang,"MSG_ME").decode('utf-8')
+MSG_CANNOT_SEND_AN_EMPTY_STRING = language.get(lang,"MSG_CANNOT_SEND_AN_EMPTY_STRING").decode('utf-8')
+MSG_CANNOT_SEND_YET_RECEIVING_DATA = language.get(lang,"MSG_CANNOT_SEND_YET_RECEIVING_DATA").decode('utf-8')
+MSG_DATA_HAS_BEEN_SENT = language.get(lang,"MSG_DATA_HAS_BEEN_SENT").decode('utf-8')
+MSG_RECEIVING_DATA_HAS_END = language.get(lang,"MSG_RECEIVING_DATA_HAS_END").decode('utf-8')
+MSG_RECEIVED_FILE_FROM = language.get(lang,"MSG_RECEIVED_FILE_FROM").decode('utf-8')
+MSG_RECEIVING_DATA = language.get(lang,"MSG_RECEIVING_DATA").decode('utf-8')
+APP_TITLE = language.get(lang,"APP_TITLE").decode('utf-8')
+MSGBOX_HELP_TITLE = language.get(lang,"MSGBOX_HELP_TITLE").decode('utf-8')
+MSGBOX_WARNING_TITLE = language.get(lang,"MSGBOX_WARNING_TITLE").decode('utf-8')
 
 
 class MainWindow(QMainWindow):
@@ -44,30 +82,29 @@ class MainWindow(QMainWindow):
         self.custom_settings = custom_settings
 
         self.timer = QTimer()
-        #set to 20 secs 
-        self.timer.setInterval(20000) 
+        self.timer.setInterval(time_before_flush_junk_data) 
         self.timer.timeout.connect(self.clearJunkData)
 
         
         self.menuBar = QMenuBar()
-        self.Menusettings = self.menuBar.addMenu('Settings')
-        self.actionOpenSettings = QAction("Open Settings",self)
+        self.Menusettings = self.menuBar.addMenu(MENU_SETTINGS)
+        self.actionOpenSettings = QAction(MENU_OPEN_SETTINGS,self)
         self.actionOpenSettings.triggered.connect(self.openSettings)
         self.Menusettings.addAction(self.actionOpenSettings)
-        self.MenuSendFile = self.menuBar.addMenu('Send File')
-        self.actionSendFile = QAction("Choose File to Send",self)
+        self.MenuSendFile = self.menuBar.addMenu(MENU_SEND_FILE)
+        self.actionSendFile = QAction(MENU_CHOOSE_FILE_TO_SEND,self)
         self.actionSendFile.triggered.connect(self.sendFile)
         self.MenuSendFile.addAction(self.actionSendFile)
-        self.MenuHelp = self.menuBar.addMenu('Help')
-        self.actionOpenHelp = QAction("Manual",self)
-        self.actionOpenAbout = QAction("About",self)
+        self.MenuHelp = self.menuBar.addMenu(MENU_HELP)
+        self.actionOpenHelp = QAction(MENU_MANUAL,self)
+        self.actionOpenAbout = QAction(MENU_ABOUT,self)
         self.MenuHelp.addAction(self.actionOpenHelp)
         self.actionOpenHelp.triggered.connect(self.openHelp)
         self.MenuHelp.addAction(self.actionOpenAbout)
         self.actionOpenAbout.triggered.connect(self.openAbout)
 
-        self.MenuExit = self.menuBar.addMenu('Exit')
-        self.actionExit = QAction('Exit App',self)
+        self.MenuExit = self.menuBar.addMenu(MENU_EXIT)
+        self.actionExit = QAction(MENU_EXIT_APP,self)
         self.actionExit.triggered.connect(self.exitApp)
         self.MenuExit.addAction(self.actionExit)
 
@@ -79,10 +116,10 @@ class MainWindow(QMainWindow):
 
         self.listWidget = QListWidget()
         self.inputText = QTextEdit()
-        self.sendButton = QPushButton("Send")
+        self.sendButton = QPushButton(BUTTON_SEND)
         self.sendButton.clicked.connect(self.sendMsg)
 
-        self.clearButton = QPushButton("Clear")
+        self.clearButton = QPushButton(BUTTON_CLEAR)
         self.clearButton.clicked.connect(self.clearSendingArea)
 
         self.horizontalButtonLayout = QHBoxLayout()
@@ -101,7 +138,7 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.BottomDockWidgetArea,self.downDockWidget)
 
         self.statusBar = QStatusBar()
-        self.statusBar.showMessage("Started!!!",5000)
+        self.statusBar.showMessage(MSG_STARTED,time_show_msg_on_statusbar)
         self.setStatusBar(self.statusBar)
 
         win = QWidget()
@@ -109,7 +146,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(win)
 
         self.setGeometry(200,200,500,500)
-        self.setWindowTitle("SerialChat Application")
+        self.setWindowTitle(APP_TITLE)
         self.setWindowIcon(QIcon(icons_folder+'chat.ico'))
         self.show()
 
@@ -127,7 +164,7 @@ class MainWindow(QMainWindow):
 
     def startThreads(self):
         if self.receive == None:
-            self.statusBar.showMessage("Starting Threads...",5000)
+            self.statusBar.showMessage(MSG_STARTING_THREADS,time_show_msg_on_statusbar)
             self.send = libthread.Send(self)
             self.receive = libthread.Receive(self)
 
@@ -144,7 +181,7 @@ class MainWindow(QMainWindow):
 
 
     def clearJunkData(self):
-        self.statusBar.showMessage("Junk Data Cleared...",5000)
+        self.statusBar.showMessage(MSG_JUNK_DATA_CLEARED,time_show_msg_on_statusbar)
         self.iswaitingData = False 
         self.timer.stop()
         self.receive.clear_vars()
@@ -158,7 +195,7 @@ class MainWindow(QMainWindow):
     def sendFile(self):
         if self.checkIfsettingsROK():
             if not self.iswaitingData and not self.send.isRunning() :
-                self.statusBar.showMessage("Start Sending...",5000)
+                self.statusBar.showMessage(MSG_START_SENDING,time_show_msg_on_statusbar)
                 fname = QFileDialog(self)
                 fname.setFileMode(QFileDialog.ExistingFile)
 
@@ -170,7 +207,7 @@ class MainWindow(QMainWindow):
                          for line in f.xreadlines():
                              fileText +=line
                      self.send.text = fileText
-                     tt = "[ Sent File : "+filename+"  @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ] "
+                     tt = "[ "+MSG_SENT_FILE+" : "+filename+"  @ "+datetime.datetime.now().strftime(date_format)+" ] "
                      tmp  = QListWidgetItem(tt)
                      tmp.setForeground(QColor('red'))
                      self.listWidget.addItem(tmp)
@@ -187,7 +224,7 @@ class MainWindow(QMainWindow):
                          chrisanag1985@gmail.com
 
         """
-        msgBox = QMessageBox.about(self,"SerialChat Application",t)
+        msgBox = QMessageBox.about(self,APP_TITLE,t)
 
     def openHelp(self):
         t = """
@@ -198,14 +235,14 @@ class MainWindow(QMainWindow):
 
 
         """
-        helpBox = QMessageBox.question(self,"SerialChat Application Help",t)
+        helpBox = QMessageBox.question(self,MSGBOX_HELP_TITLE,t)
 
 
     def checkIfsettingsROK(self):
         
         if self.receive == None:
-            msgBox = QMessageBox(icon=QMessageBox.Warning,text="Check your Settings...")
-            msgBox.setWindowTitle('Warning')
+            msgBox = QMessageBox(icon=QMessageBox.Warning,text=MSG_CHECK_YOUR_SETTINGS)
+            msgBox.setWindowTitle(MSGBOX_WARNING_TITLE)
             msgBox.exec_()
             self.inputText.clear()
             return False
@@ -220,8 +257,8 @@ class MainWindow(QMainWindow):
                 self.send.type = 'msg'
                 find = re.search("^\s*$",self.send.text)
                 if not find:
-                    self.statusBar.showMessage("Start Sending...",5000)
-                    tt = "[ "+self.nickname+" (me) @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "+self.send.text
+                    self.statusBar.showMessage(MSG_START_SENDING,time_show_msg_on_statusbar)
+                    tt = "[ "+self.nickname+" ("+MSG_ME+") @ "+datetime.datetime.now().strftime(date_format)+" ]: "+self.send.text
                     tmp = QListWidgetItem(tt)
                     tmp.setForeground(QColor('blue'))
                     self.listWidget.addItem(tmp)
@@ -229,9 +266,9 @@ class MainWindow(QMainWindow):
                     self.send.start()
                     self.inputText.clear()
                 else:
-                    self.statusBar.showMessage("Cannot Send an Empty String...",5000)
+                    self.statusBar.showMessage(MSG_CANNOT_SEND_AN_EMPTY_STRING,time_show_msg_on_statusbar)
             elif self.iswaitingData:
-               self.statusBar.showMessage("Cannot send yet... Receiving data...",5000)
+               self.statusBar.showMessage(MSG_CANNOT_SEND_YET_RECEIVING_DATA,time_show_msg_on_statusbar)
 
     def clearSendingArea(self):
         self.inputText.clear()
@@ -248,7 +285,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def endData(self):
-        self.statusBar.showMessage("Data has been Sent...",5000)
+        self.statusBar.showMessage(MSG_DATA_HAS_BEEN_SENT,time_show_msg_on_statusbar)
 
     @Slot()
     def startRCV(self,x):
@@ -275,12 +312,12 @@ class MainWindow(QMainWindow):
     @Slot()
     def endRCV(self):
         self.timer.stop()
-        self.statusBar.showMessage("Receiving Data has ended...",5000)
+        self.statusBar.showMessage(MSG_RECEIVING_DATA_HAS_END,time_show_msg_on_statusbar)
         self.iswaitingData = False
         self.counter = 0
         try:
             if self.receive.type == 'msg':
-                tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
+                tt = "[ "+self.receive.nickname+" @ "+datetime.datetime.now().strftime(date_format)+" ]: "
                 xxxx= self.reassembleData(self.receive.data)
                 if type(xxxx) == str:
                     xxxx = xxxx.decode('utf-8')
@@ -290,7 +327,7 @@ class MainWindow(QMainWindow):
                with open(self.default_save_folder+str('/')+self.receive.filename,'w') as f:
                    f.write(self.reassembleData(self.receive.data))
                f.close()
-               tt = "[ Received File from "+self.receive.nickname+"  @ "+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")+" ]: "
+               tt = "[ "+MSG_RECEIVED_FILE_FROM+" "+self.receive.nickname+"  @ "+datetime.datetime.now().strftime(date_format)+" ]: "
                tt += self.default_save_folder+str('/')+self.receive.filename
                
 
@@ -307,7 +344,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def catchESF(self,specs):
-        self.statusBar.showMessage("Receiving Data...",10000)
+        self.statusBar.showMessage(MSG_RECEIVING_DATA,time_show_msg_on_statusbar)
         try:
             specs = json.loads(specs)
         except Exception as e:
@@ -319,24 +356,9 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def catchEOP(self,len_of_data):
-        self.statusBar.showMessage("Receiving Data...",10000)
+        self.statusBar.showMessage(MSG_RECEIVING_DATA,time_show_msg_on_statusbar)
         self.counter += int(len_of_data)
         self.progressBar.setValue(self.counter)
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
 
 
 ##########################end class Main Window#############################

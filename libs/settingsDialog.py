@@ -4,7 +4,7 @@ import libserial
 import ConfigParser
 
 
-serial_speeds = ["2400","4800","9600","19200"]
+serial_speeds = ["1200","2400","4800","9600","14400","19200"]
 parity_values = ["None","Odd","Even"]
 bytesize_values = [5,6,7,8]
 stop_values = ["1","1,5","2"]
@@ -12,8 +12,26 @@ flow_control_values = ["None","XON/XOFF","RTS/CTS"]
 
 icons_folder = "resources/icons/"
 
+lang = "GR"
 
+language = ConfigParser.ConfigParser()
+language.read("resources/languages/"+lang+".ini")
 
+SERIAL_CHAT_SETTINGS_TITLE= language.get(lang,"SERIAL_CHAT_SETTINGS_TITLE").decode('utf-8')
+CONNECT = language.get(lang,"CONNECT" ).decode('utf-8')
+FORMLAYOUT_SERIAL_TITLE= language.get(lang,"FORMLAYOUT_SERIAL_TITLE" ).decode('utf-8')
+FORMLAYOUT_PROFILE_TITLE= language.get(lang,"FORMLAYOUT_PROFILE_TITLE" ).decode('utf-8')   
+FORMLAYOUT_CUSTOM_SERIAL_SETTINGS_TITLE= language.get(lang,"FORMLAYOUT_CUSTOM_SERIAL_SETTINGS_TITLE" ).decode('utf-8')
+FORMLAYOUT_INTERVAL_TIME_TITLE= language.get(lang,"FORMLAYOUT_INTERVAL_TIME_TITLE" ).decode('utf-8')
+FORMLAYOUT_SERIAL_SPEED_TITLE= language.get(lang,"FORMLAYOUT_SERIAL_SPEED_TITLE" ).decode('utf-8')
+FORMLAYOUT_DATA_BITS_TITLE= language.get(lang,"FORMLAYOUT_DATA_BITS_TITLE" ).decode('utf-8')
+FORMLAYOUT_STOP_BITS_TITLE= language.get(lang,"FORMLAYOUT_STOP_BITS_TITLE" ).decode('utf-8')
+FORMLAYOUT_PARITY_TITLE= language.get(lang,"FORMLAYOUT_PARITY_TITLE" ).decode('utf-8')
+FORMLAYOUT_FLOWCONTROL_TITLE= language.get(lang,"FORMLAYOUT_FLOWCONTROL_TITLE" ).decode('utf-8')
+FORMLAYOUT_ENABLE_ACP127_TITLE= language.get(lang,"FORMLAYOUT_ENABLE_ACP127_TITLE").decode('utf-8')
+FORMLAYOUT_NICKNAME_TITLE= language.get(lang,"FORMLAYOUT_NICKNAME_TITLE" ).decode('utf-8')
+FORMLAYOUT_SAVE_FOLDER_FILE_TITLE= language.get(lang,"FORMLAYOUT_SAVE_FOLDER_FILE_TITLE" ).decode('utf-8')
+MSG_SERIAL_INT_STARTED= language.get(lang,"MSG_SERIAL_INT_STARTED").decode('utf-8')
 
 
 class SettingsWindow(QDialog):
@@ -34,10 +52,10 @@ class SettingsWindow(QDialog):
         self.settingsparser = ConfigParser.ConfigParser()
         self.settingsparser.read('config/settings.ini')
 
-        self.setWindowTitle('SerialChat Settings')
+        self.setWindowTitle(SERIAL_CHAT_SETTINGS_TITLE)
 
         self.buttonbox = QDialogButtonBox( QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.buttonbox.button(QDialogButtonBox.Ok).setText("Connect")
+        self.buttonbox.button(QDialogButtonBox.Ok).setText(CONNECT)
         self.buttonbox.accepted.connect(self.accept)
         self.accepted.connect(self.applyChanges)
         self.buttonbox.rejected.connect(self.reject)
@@ -154,18 +172,18 @@ class SettingsWindow(QDialog):
 
         
         self.grid = QFormLayout()
-        self.grid.addRow("Serial:",self.serialDropDown)
-        self.grid.addRow("Profile:",self.profiles)
-        self.grid.addRow("Custom Serial Settings",self.customsettings)
-        self.grid.addRow("Interval Time:",self.intervaltime)
-        self.grid.addRow("Serial Speed(baud):",self.serialspeed)
-        self.grid.addRow("Data Bits:",self.databits)
-        self.grid.addRow("Stop Bits:",self.stopbits)
-        self.grid.addRow("Parity:",self.parity)
-        self.grid.addRow("Flow Control:",self.flowcontrol)
-        self.grid.addRow("Enable ACP-127",self.enableACP127)
-        self.grid.addRow("Nickname:",self.nickname)
-        self.grid.addRow("Save File Folder:",self.hBoxContainer)
+        self.grid.addRow(FORMLAYOUT_SERIAL_TITLE+":",self.serialDropDown)
+        self.grid.addRow(FORMLAYOUT_PROFILE_TITLE+":",self.profiles)
+        self.grid.addRow(FORMLAYOUT_CUSTOM_SERIAL_SETTINGS_TITLE,self.customsettings)
+        self.grid.addRow(FORMLAYOUT_INTERVAL_TIME_TITLE+":",self.intervaltime)
+        self.grid.addRow(FORMLAYOUT_SERIAL_SPEED_TITLE+"(baud):",self.serialspeed)
+        self.grid.addRow(FORMLAYOUT_DATA_BITS_TITLE+":",self.databits)
+        self.grid.addRow(FORMLAYOUT_STOP_BITS_TITLE+":",self.stopbits)
+        self.grid.addRow(FORMLAYOUT_PARITY_TITLE+":",self.parity)
+        self.grid.addRow(FORMLAYOUT_FLOWCONTROL_TITLE+":",self.flowcontrol)
+        self.grid.addRow(FORMLAYOUT_ENABLE_ACP127_TITLE+" ACP-127",self.enableACP127)
+        self.grid.addRow(FORMLAYOUT_NICKNAME_TITLE+":",self.nickname)
+        self.grid.addRow(FORMLAYOUT_SAVE_FOLDER_FILE_TITLE+":",self.hBoxContainer)
         self.grid.addRow("",self.buttonbox)
         self.setLayout(self.grid)
         self.show()
@@ -228,7 +246,7 @@ class SettingsWindow(QDialog):
         if type(res) != None and type(res) != OSError:
             self.parent.serial_port = res 
             self.parent.startThreads()
-            self.parent.statusBar.showMessage("Serial Interface %s has started..."%self.parent.serial_port.port)
+            self.parent.statusBar.showMessage(MSG_SERIAL_INT_STARTED%self.parent.serial_port.port)
         else:
             print("Sth wrong just happend...")
 

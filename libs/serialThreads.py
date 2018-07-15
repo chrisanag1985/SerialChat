@@ -6,6 +6,7 @@ import sys
 import json
 import base64
 import re
+import ConfigParser
 
 #sport = sys.argv[1] 
 #ser = serial.Serial(port=sport)
@@ -20,7 +21,14 @@ msg - message
 file - file
 resend - request to resend chunks that were damaged
 """
+settingsparser = ConfigParser.ConfigParser()
+settingsparser.read('config/settings.ini')
 
+chunk_size = int(settingsparser.get("app_settings","chunk_size"))
+time_to_sleep_receive_loop = float(settingsparser.get("app_settings","time_to_sleep_receive_loop"))
+time_to_sleep_after_esf = float(settingsparser.get("app_settings","time_to_sleep_after_esf"))
+acp127_prefix = str(settingsparser.get("acp_127","prefix"))
+acp127_postfix = str(settingsparser.get("acp_127","postfix"))
 
 
 
@@ -29,7 +37,6 @@ class Send(QThread):
     """
     before you start() you must enter the self.text 
     """
-
     sendData = Signal(int)
     totalData = Signal(int)
     endData = Signal()
@@ -48,16 +55,19 @@ class Send(QThread):
 
 
     def run(self):
+
+
+
         if type(self.text) == unicode:
             self.text = self.text.encode('utf-8')
         full_size = len(self.text)
         self.totalData.emit(full_size)
-        pieces = full_size/1024
-        remain = full_size%1024
-        size = 1024
+        pieces = full_size/chunk_size
+        remain = full_size%chunk_size
+        size = chunk_size 
         t2s = ''
         if self.parent.acp127:
-            t2s = "VZCZC "
+            t2s = acp127_prefix 
         sending_data = {}
         sending_data['type'] = self.type 
         sending_data['filename'] = self.filename 
@@ -71,10 +81,10 @@ class Send(QThread):
             print(e)
         t2s += "_E_s_F_"
         if self.parent.acp127:
-            t2s += " NNNN"
+            t2s += acp127_postfix 
         self.ser.write(t2s)
         self.ser.flush()
-        time.sleep(3) 
+        time.sleep(time_to_sleep_after_esf)
         texttmp = '' 
         sending_data = {}
         self.counter = 0
@@ -84,7 +94,7 @@ class Send(QThread):
 
                 t2s = ''
                 if self.parent.acp127:
-                    t2s = "VZCZC "
+                    t2s =  acp127_prefix
                 sending_data = {}
                 texttmp = self.text[-(remain):]
                 self.counter += len(texttmp)
@@ -95,7 +105,7 @@ class Send(QThread):
                     print(e) 
                 t2s += "_E_0_F_"
                 if self.parent.acp127:
-                    t2s += " NNNN"
+                    t2s += acp127_postfix 
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.sendData.emit(self.counter)
@@ -105,7 +115,7 @@ class Send(QThread):
             elif i == pieces and remain == 0:
                 t2s = ''
                 if self.parent.acp127:
-                    t2s = "VZCZC "
+                    t2s = acp127_prefix
                 sending_data['data_remain'] = base64.b64encode("_")
                 try:
                     t2s += json.dumps(sending_data)
@@ -113,7 +123,7 @@ class Send(QThread):
                     print(e)
                 t2s += "_E_0_F_"
                 if self.parent.acp127:
-                    t2s += " NNNN"
+                    t2s += acp127_postfix 
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.endData.emit()
@@ -122,7 +132,7 @@ class Send(QThread):
             else:
                 t2s = ''
                 if self.parent.acp127:
-                    t2s = "VZCZC "
+                    t2s = acp127_prefix
                 sending_data = {}
                 texttmp = self.text[size*i:size*(i+1)]
                 self.counter += len(texttmp)
@@ -133,7 +143,7 @@ class Send(QThread):
                     print(e)
                 t2s += "_E_0_P_"
                 if self.parent.acp127:
-                    t2s += " NNNN"
+                    t2s += acp127_postfix
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.sendData.emit(self.counter)
@@ -143,6 +153,7 @@ class Send(QThread):
 
 
 class Receive(QThread):
+
 
     startRCV = Signal(int)
     endRCV = Signal()
@@ -171,6 +182,8 @@ class Receive(QThread):
 
 
     def run(self):
+
+
         self.tdata = ''
         self.counter = 0
         while self.loopRun:
@@ -181,8 +194,8 @@ class Receive(QThread):
             if iswait > 0:
                 #self.emit(SIGNAL('startRCV(int)'),self.ser.inWaiting())
                 self.startRCV.emit(self.ser.inWaiting())
-                if iswait >1024:
-                    iswait = 1024
+                if iswait > chunk_size:
+                    iswait = chunk_size 
                 if self.tdata == '':
                     self.tdata = self.ser.read(iswait) 
                 else:
@@ -190,8 +203,9 @@ class Receive(QThread):
                 if "_E_s_F_" in self.tdata:
                     #self.emit(SIGNAL('catchESF(str)'),self.tdata)
                     if self.parent.acp127 :
-                        self.tdata = self.tdata.replace("VZCZC ","")
-                        self.tdata = self.tdata.replace(" NNNN","")
+                        self.tdata = self.tdata.replace(acp127_prefix,"")
+                        self.tdata = self.tdata.replace(acp127_postfix,"")
+                        
 
                     self.tdata = self.tdata.replace("_E_s_F_","")
                     self.catchESF.emit(self.tdata)
@@ -210,8 +224,8 @@ class Receive(QThread):
 
                 if "_E_0_P_" in self.tdata:
                     if self.parent.acp127 :
-                        self.tdata = self.tdata.replace("VZCZC ","")
-                        self.tdata = self.tdata.replace(" NNNN","")
+                        self.tdata = self.tdata.replace(acp127_prefix,"")
+                        self.tdata = self.tdata.replace(acp127_postfix,"")
                     self.tdata  = self.tdata.replace("_E_0_P_","")
                     #lenofdata = len(self.tdata)
                     try:
@@ -229,8 +243,8 @@ class Receive(QThread):
 
                 if "_E_0_F_" in self.tdata:
                     if self.parent.acp127 :
-                        self.tdata = self.tdata.replace("VZCZC ","")
-                        self.tdata = self.tdata.replace(" NNNN","")
+                        self.tdata = self.tdata.replace(acp127_prefix,"")
+                        self.tdata = self.tdata.replace(acp127_postfix,"")
                     self.tdata  = self.tdata.replace("_E_0_F_","")
                     try:
                         self.tdata = json.loads(self.tdata) 
@@ -249,4 +263,4 @@ class Receive(QThread):
                     self.counter = 0
                     self.ser.flushInput()
                     self.ser.flushOutput()
-            time.sleep(0.5)
+            time.sleep(time_to_sleep_receive_loop)
