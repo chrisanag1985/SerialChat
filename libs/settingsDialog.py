@@ -19,6 +19,7 @@ language.read("resources/languages/"+lang+".ini")
 
 SERIAL_CHAT_SETTINGS_TITLE= language.get(lang,"SERIAL_CHAT_SETTINGS_TITLE").decode('utf-8')
 CONNECT = language.get(lang,"CONNECT" ).decode('utf-8')
+CANCEL = language.get(lang,"CANCEL" ).decode('utf-8')
 FORMLAYOUT_SERIAL_TITLE= language.get(lang,"FORMLAYOUT_SERIAL_TITLE" ).decode('utf-8')
 FORMLAYOUT_PROFILE_TITLE= language.get(lang,"FORMLAYOUT_PROFILE_TITLE" ).decode('utf-8')   
 FORMLAYOUT_CUSTOM_SERIAL_SETTINGS_TITLE= language.get(lang,"FORMLAYOUT_CUSTOM_SERIAL_SETTINGS_TITLE" ).decode('utf-8')
@@ -56,6 +57,7 @@ class SettingsWindow(QDialog):
 
         self.buttonbox = QDialogButtonBox( QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.buttonbox.button(QDialogButtonBox.Ok).setText(CONNECT)
+        self.buttonbox.button(QDialogButtonBox.Cancel).setText(CANCEL)
         self.buttonbox.accepted.connect(self.accept)
         self.accepted.connect(self.applyChanges)
         self.buttonbox.rejected.connect(self.reject)
