@@ -12,7 +12,9 @@ flow_control_values = ["None","XON/XOFF","RTS/CTS"]
 
 icons_folder = "resources/icons/"
 
-lang = "GR"
+settingsparser1 = ConfigParser.ConfigParser()
+settingsparser1.read('config/settings.ini')
+lang = settingsparser1.get("default","lang")
 
 language = ConfigParser.ConfigParser()
 language.read("resources/languages/"+lang+".ini")

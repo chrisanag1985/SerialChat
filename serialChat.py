@@ -32,7 +32,7 @@ time_before_flush_junk_data = int(settingsparser.get("app_settings","time_before
 time_show_msg_on_statusbar = int(settingsparser.get("app_settings","time_show_msg_on_statusbar"))
 date_format = str(settingsparser.get("app_settings","date_format"))
 
-lang = "GR"
+lang = str(settingsparser.get("default","lang"))
 language = ConfigParser.ConfigParser()
 language.read("resources/languages/"+lang+".ini")
 
@@ -224,17 +224,28 @@ class MainWindow(QMainWindow):
                          chrisanag1985@gmail.com
 
         """
-        msgBox = QMessageBox.about(self,APP_TITLE,t)
 
-    def openHelp(self):
-        t = """
-        
-        This is a help text for demo only :P
-        !!!
+        t_GR = """
+        Πολυνηματική εφαρμογή ανταλλαγης μηνυμάτων μέσω σειριακού καλωδίου
 
-
+                    Δημιουργήθηκε από τον Χρίστο Αναγνωστόπουλο
+                        chrisanag1985@gmail.com
 
         """
+        if lang ==  "EN":
+            msgBox = QMessageBox.about(self,APP_TITLE,t)
+        elif lang == "GR" :
+            msgBox = QMessageBox.about(self,APP_TITLE,t_GR.decode('utf-8'))
+
+
+    def openHelp(self):
+
+        t = ''
+        filename = "help_"+lang+".txt"
+        with open("resources/docs/"+filename) as help_doc:
+            for line in help_doc.xreadlines():
+                t += line
+        t = t.decode('utf-8')
         helpBox = QMessageBox.question(self,MSGBOX_HELP_TITLE,t)
 
 
