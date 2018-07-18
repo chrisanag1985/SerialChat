@@ -1,6 +1,7 @@
 # serialChat
 Python Multithreading Chat over Serial port with qt interface...
 
+
 ## Description
 The purpose of this project is to provide a **multi-threading** chat application with a friendly qt interface. 
 

@@ -1,0 +1,2 @@
+PySide
+pyserial==2.7
