@@ -9,8 +9,8 @@ import re
 from PySide.QtCore import *
 from PySide.QtGui import *
 
-import libs.serialThreads as libthread
-import libs.settingsDialog as settingsDialog
+import libs.serialThreads as lib_thread
+import libs.settingsDialog as settings_Dialog
 
 icons_folder = "resources/icons/"
 nickname = "Guest"
@@ -133,20 +133,20 @@ class MainWindow(QMainWindow):
         self.show()
 
     def exit_app(self):
-        if self.send != None:
+        if self.send is not None:
             if self.send.isRunning():
                 self.send.wait()
-        if self.receive !=None:
+        if self.receive is not None:
             if self.receive.isRunning():
                 self.receive.loop_run = False
                 self.receive.wait()
         self.close()
 
     def start_threads(self):
-        if self.receive == None:
+        if self.receive is None:
             self.status_bar_widget.showMessage(MSG_STARTING_THREADS, time_show_msg_on_statusbar)
-            self.send = libthread.Send(self)
-            self.receive = libthread.Receive(self)
+            self.send = lib_thread.Send(self)
+            self.receive = lib_thread.Receive(self)
 
             self.send.total_data_signal.connect(self.total_data_slot)
             self.send.send_data_signal.connect(self.send_data_slot)
@@ -173,7 +173,7 @@ class MainWindow(QMainWindow):
         self.receive.clear_vars()
 
     def open_settings(self):
-        settingsDialog.SettingsWindow(self)
+        settings_Dialog.SettingsWindow(self)
 
     def send_file(self):
         if self.check_if_settings_r_ok():
@@ -232,7 +232,7 @@ class MainWindow(QMainWindow):
 
     def check_if_settings_r_ok(self):
 
-        if self.receive == None:
+        if self.receive is None:
             msgBox = QMessageBox(icon=QMessageBox.Warning,text=MSG_CHECK_YOUR_SETTINGS)
             msgBox.setWindowTitle(MSGBOX_WARNING_TITLE)
             msgBox.exec_()
