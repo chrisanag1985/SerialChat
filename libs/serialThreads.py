@@ -11,23 +11,24 @@ msg - message
 file - file
 not implemented yet ... resend - request to resend chunks that were damaged
 """
-settingsparser = ConfigParser.ConfigParser()
-settingsparser.read('config/settings.ini')
+settings_parser = ConfigParser.ConfigParser()
+settings_parser.read('config/settings.ini')
 
-chunk_size = int(settingsparser.get("app_settings","chunk_size"))
-time_to_sleep_receive_loop = float(settingsparser.get("app_settings","time_to_sleep_receive_loop"))
-time_to_sleep_after_esf = float(settingsparser.get("app_settings","time_to_sleep_after_esf"))
-acp127_prefix = str(settingsparser.get("acp_127","prefix"))
-acp127_postfix = str(settingsparser.get("acp_127","postfix"))
+chunk_size = int(settings_parser.get("app_settings", "chunk_size"))
+time_to_sleep_receive_loop = float(settings_parser.get("app_settings", "time_to_sleep_receive_loop"))
+time_to_sleep_after_esf = float(settings_parser.get("app_settings", "time_to_sleep_after_esf"))
+acp127_prefix = str(settings_parser.get("acp_127", "prefix"))
+acp127_postfix = str(settings_parser.get("acp_127", "postfix"))
 
 class Send(QThread):
     
-    sendData = Signal(int)
-    totalData = Signal(int)
-    endData = Signal()
+    send_data_signal = Signal(int)
+    total_data_signal = Signal(int)
+    end_data_signal = Signal()
 
     def __init__(self,parent):
         QThread.__init__(self)
+        self.parent = parent
         self.counter = 0
         self.text = None
         self.nickname = parent.nickname 
@@ -35,15 +36,14 @@ class Send(QThread):
         self.type = 'msg'
         self.ser = parent.serial_port 
         self.interval_time = parent.intervaltime
-        self.progressbar = parent.progressBar
-        self.parent = parent
+        self.progressbar = parent.progress_bar_widget
 
     def run(self):
 
         if type(self.text) == unicode:
             self.text = self.text.encode('utf-8')
         full_size = len(self.text)
-        self.totalData.emit(full_size)
+        self.total_data_signal.emit(full_size)
         pieces = full_size/chunk_size
         remain = full_size%chunk_size
         size = chunk_size 
@@ -89,8 +89,8 @@ class Send(QThread):
                     t2s += acp127_postfix 
                 self.ser.write(t2s)
                 self.ser.flush()
-                self.sendData.emit(self.counter)
-                self.endData.emit()
+                self.send_data_signal.emit(self.counter)
+                self.end_data_signal.emit()
                 self.ser.flushInput()
                 self.ser.flushOutput()
             elif i == pieces and remain == 0:
@@ -107,7 +107,7 @@ class Send(QThread):
                     t2s += acp127_postfix 
                 self.ser.write(t2s)
                 self.ser.flush()
-                self.endData.emit()
+                self.end_data_signal.emit()
                 self.ser.flushInput()
                 self.ser.flushOutput()
             else:
@@ -127,7 +127,7 @@ class Send(QThread):
                     t2s += acp127_postfix
                 self.ser.write(t2s)
                 self.ser.flush()
-                self.sendData.emit(self.counter)
+                self.send_data_signal.emit(self.counter)
                 time.sleep(self.interval_time)
 
 

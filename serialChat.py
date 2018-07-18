@@ -138,7 +138,7 @@ class MainWindow(QMainWindow):
                 self.send.wait()
         if self.receive !=None:
             if self.receive.isRunning():
-                self.receive.loopRun = False
+                self.receive.loop_run = False
                 self.receive.wait()
         self.close()
 
@@ -148,9 +148,9 @@ class MainWindow(QMainWindow):
             self.send = libthread.Send(self)
             self.receive = libthread.Receive(self)
 
-            self.send.totalData.connect(self.total_data_slot)
-            self.send.sendData.connect(self.send_data_slot)
-            self.send.endData.connect(self.end_data_slot)
+            self.send.total_data_signal.connect(self.total_data_slot)
+            self.send.send_data_signal.connect(self.send_data_slot)
+            self.send.end_data_signal.connect(self.end_data_slot)
 
             self.receive.start_receive_signal.connect(self.start_receive_slot)
             self.receive.end_receive_signal.connect(self.end_receive_slot)
@@ -162,7 +162,7 @@ class MainWindow(QMainWindow):
 
     def interface_problem(self, exception):
         self.status_bar_widget.showMessage(exception, time_show_msg_on_statusbar)
-        self.receive.loopRun = False
+        self.receive.loop_run = False
         self.receive.wait()
         self.receive = None
 

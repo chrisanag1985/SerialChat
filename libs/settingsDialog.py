@@ -79,7 +79,7 @@ class SettingsWindow(QDialog):
             self.profiles_combobox.addItem("Custom")
         for profile in self.config_parser.sections():
             self.profiles_combobox.addItem(profile)
-        if self.parent.custom_settings_enable_disable:
+        if self.parent.custom_settings:
             self.profiles_combobox.setCurrentIndex(self.profiles_combobox.findText('Custom'))
         elif self.parent.choosen_profile != 'None':
             self.profiles_combobox.setCurrentIndex(self.profiles_combobox.findText(self.parent.choosen_profile))
@@ -93,7 +93,7 @@ class SettingsWindow(QDialog):
         self.custom_settings_checkbox = QCheckBox()
         self.custom_settings_checkbox.stateChanged.connect(self.custom_settings_enable_disable)
 
-        self.interval_time_lineedit = QLineEdit(str(self.parent.intervaltime))
+        self.interval_time_lineedit = QLineEdit(str(self.parent.interval_time))
         self.interval_time_lineedit.setDisabled(True)
          
         self.serial_speed_combobox = QComboBox()
@@ -256,7 +256,8 @@ class SettingsWindow(QDialog):
         if type(res) != None and type(res) != OSError:
             self.parent.serial_port = res 
             self.parent.start_threads()
-            self.parent.statusBar.showMessage(MSG_SERIAL_INT_STARTED%self.parent.serial_port.port)
+            self.parent.status_bar_widget.showMessage(MSG_SERIAL_INT_STARTED%self.parent.serial_port.port)
+
         else:
             print("Sth wrong just happend...")
 
