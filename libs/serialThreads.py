@@ -1,25 +1,15 @@
-from PySide.QtCore import *
-from PySide.QtGui import *
-import time
-import serial
-import sys
-import json
-import base64
-import re
 import ConfigParser
+import base64
+import json
+import time
 
-#sport = sys.argv[1] 
-#ser = serial.Serial(port=sport)
-#print(ser)
+from PySide.QtCore import *
 
-#text2 = "a"*2330
-#
-#interval_time = 4
 """
 possible types:
 msg - message
 file - file
-resend - request to resend chunks that were damaged
+not implemented yet ... resend - request to resend chunks that were damaged
 """
 settingsparser = ConfigParser.ConfigParser()
 settingsparser.read('config/settings.ini')
@@ -30,13 +20,8 @@ time_to_sleep_after_esf = float(settingsparser.get("app_settings","time_to_sleep
 acp127_prefix = str(settingsparser.get("acp_127","prefix"))
 acp127_postfix = str(settingsparser.get("acp_127","postfix"))
 
-
-
 class Send(QThread):
     
-    """
-    before you start() you must enter the self.text 
-    """
     sendData = Signal(int)
     totalData = Signal(int)
     endData = Signal()
@@ -53,10 +38,7 @@ class Send(QThread):
         self.progressbar = parent.progressBar
         self.parent = parent
 
-
     def run(self):
-
-
 
         if type(self.text) == unicode:
             self.text = self.text.encode('utf-8')
@@ -91,7 +73,6 @@ class Send(QThread):
 
         for i in range(0,pieces+1):
             if i== pieces and remain !=0:
-
                 t2s = ''
                 if self.parent.acp127:
                     t2s =  acp127_prefix
@@ -150,20 +131,17 @@ class Send(QThread):
                 time.sleep(self.interval_time)
 
 
-
-
 class Receive(QThread):
 
-
-    startRCV = Signal(int)
-    endRCV = Signal()
-    catchESF = Signal(str)
-    catchEOP = Signal(int)
-    interfaceProblem = Signal(str)
+    start_receive_signal = Signal(int)
+    end_receive_signal = Signal()
+    catch_esf_signal = Signal(str)
+    catch_eop_signal = Signal(int)
+    interface_problem_signal = Signal(str)
 
     def __init__(self,parent):
         QThread.__init__(self)
-        self.iswaitingData = False
+        self.is_waiting_data = False
         self.data = {} 
         self.size = 0
         self.pieces = 0
@@ -173,33 +151,29 @@ class Receive(QThread):
         self.type = None
         self.ser = parent.serial_port 
         self.parent = parent
-        self.loopRun = True
+        self.loop_run = True
         self.tdata = ''
-
 
     def clear_vars(self):
         self.data = {}
         self.tdata = ''
 
-
     def run(self):
-
 
         self.tdata = ''
         self.counter = 0
-        while self.loopRun:
+        while self.loop_run:
         
             
             try:
                 iswait = self.ser.inWaiting()
             except Exception as e:
                 print(e)
-                self.interfaceProblem.emit(str(e))
+                self.interface_problem_signal.emit(str(e))
             
             
             if iswait > 0:
-                #self.emit(SIGNAL('startRCV(int)'),self.ser.inWaiting())
-                self.startRCV.emit(self.ser.inWaiting())
+                self.start_receive_signal.emit(self.ser.inWaiting())
                 if iswait > chunk_size:
                     iswait = chunk_size 
                 if self.tdata == '':
@@ -207,14 +181,13 @@ class Receive(QThread):
                 else:
                     self.tdata += self.ser.read(iswait) 
                 if "_E_s_F_" in self.tdata:
-                    #self.emit(SIGNAL('catchESF(str)'),self.tdata)
                     if self.parent.acp127 :
                         self.tdata = self.tdata.replace(acp127_prefix,"")
                         self.tdata = self.tdata.replace(acp127_postfix,"")
                         
 
                     self.tdata = self.tdata.replace("_E_s_F_","")
-                    self.catchESF.emit(self.tdata)
+                    self.catch_esf_signal.emit(self.tdata)
                     try:
                         self.tdata = json.loads(self.tdata)
                         self.size = self.tdata['size']
@@ -233,7 +206,6 @@ class Receive(QThread):
                         self.tdata = self.tdata.replace(acp127_prefix,"")
                         self.tdata = self.tdata.replace(acp127_postfix,"")
                     self.tdata  = self.tdata.replace("_E_0_P_","")
-                    #lenofdata = len(self.tdata)
                     try:
                         self.tdata = json.loads(self.tdata) 
                         key,value = self.tdata.popitem() 
@@ -243,8 +215,7 @@ class Receive(QThread):
                         print(value)
                     self.data[key]=str(value)
                     lenofdata = len(value)
-                    #self.emit(SIGNAL('catchEOP(int)'),lenofdata)
-                    self.catchEOP.emit(lenofdata)
+                    self.catch_eop_signal.emit(lenofdata)
                     self.tdata = ''
 
                 if "_E_0_F_" in self.tdata:
@@ -261,10 +232,8 @@ class Receive(QThread):
                         print(value)
                     self.data[key]=str(value)
                     lenofdata = len(value)
-                    #self.emit(SIGNAL('catchEOP(int)'),lenofdata)
-                    self.catchEOP.emit(lenofdata)
-                    #self.emit(SIGNAL('endRCV()'))
-                    self.endRCV.emit()
+                    self.catch_eop_signal.emit(lenofdata)
+                    self.end_receive_signal.emit()
                     self.tdata = ''
                     self.counter = 0
                     self.ser.flushInput()

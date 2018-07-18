@@ -1,8 +1,8 @@
-from PySide.QtCore import *
-from PySide.QtGui import *
-import libserial 
 import ConfigParser
 
+from PySide.QtGui import *
+
+import libserial
 
 serial_speeds = ["1200","2400","4800","9600","14400","19200"]
 parity_values = ["None","Odd","Even"]
@@ -12,9 +12,9 @@ flow_control_values = ["None","XON/XOFF","RTS/CTS"]
 
 icons_folder = "resources/icons/"
 
-settingsparser1 = ConfigParser.ConfigParser()
-settingsparser1.read('config/settings.ini')
-lang = settingsparser1.get("default","lang")
+settings_parser_1 = ConfigParser.ConfigParser()
+settings_parser_1.read('config/settings.ini')
+lang = settings_parser_1.get("default", "lang")
 
 language = ConfigParser.ConfigParser()
 language.read("resources/languages/"+lang+".ini")
@@ -43,159 +43,159 @@ class SettingsWindow(QDialog):
     def __init__(self,parent):
         super(self.__class__,self).__init__(parent)
         self.parent = parent 
-        self.lib = libserial.initApp(self)
+        self.lib = libserial.InitApp(self)
         if self.parent.receive is not None:
-            self.boolConfigIsOK = True 
+            self.boolean_config_is_ok = True
         else:
-            self.boolConfigIsOK = False
+            self.boolean_config_is_ok = False
 
-        self.configparser = ConfigParser.ConfigParser()
-        self.configparser.read("config/profiles/profiles.ini")
+        self.config_parser = ConfigParser.ConfigParser()
+        self.config_parser.read("config/profiles/profiles.ini")
 
-        self.settingsparser = ConfigParser.ConfigParser()
-        self.settingsparser.read('config/settings.ini')
+        self.settings_parser = ConfigParser.ConfigParser()
+        self.settings_parser.read('config/settings.ini')
 
         self.setWindowTitle(SERIAL_CHAT_SETTINGS_TITLE)
 
-        self.buttonbox = QDialogButtonBox( QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        self.buttonbox.button(QDialogButtonBox.Ok).setText(CONNECT)
-        self.buttonbox.button(QDialogButtonBox.Cancel).setText(CANCEL)
-        self.buttonbox.accepted.connect(self.accept)
-        self.accepted.connect(self.applyChanges)
-        self.buttonbox.rejected.connect(self.reject)
-        self.serialDropDown = QComboBox()
+        self.button_box_dialog = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box_dialog.button(QDialogButtonBox.Ok).setText(CONNECT)
+        self.button_box_dialog.button(QDialogButtonBox.Cancel).setText(CANCEL)
+        self.button_box_dialog.accepted.connect(self.accept)
+        self.accepted.connect(self.apply_setting_changes)
+        self.button_box_dialog.rejected.connect(self.reject)
+        self.serial_dropdown = QComboBox()
 
         self.lib.init__serial()
-        self.serialvalues =self.lib.get_serials()
-        for serials in self.serialvalues: 
-            self.serialDropDown.addItem(serials)
+        self.serial_values =self.lib.get_serials()
+        for serials in self.serial_values:
+            self.serial_dropdown.addItem(serials)
         
         if self.parent.serial_port != None:
-            self.serialDropDown.setCurrentIndex(self.serialDropDown.findText(self.parent.serial_port.name))
+            self.serial_dropdown.setCurrentIndex(self.serial_dropdown.findText(self.parent.serial_port.name))
 
-        self.profiles = QComboBox()
-        self.profiles.addItem("None")
+        self.profiles_combobox = QComboBox()
+        self.profiles_combobox.addItem("None")
         if self.parent.choosen_profile == "Custom":
-            self.profiles.addItem("Custom")
-        for profile in self.configparser.sections():
-            self.profiles.addItem(profile)
-        if self.parent.custom_settings:
-            self.profiles.setCurrentIndex(self.profiles.findText('Custom'))
+            self.profiles_combobox.addItem("Custom")
+        for profile in self.config_parser.sections():
+            self.profiles_combobox.addItem(profile)
+        if self.parent.custom_settings_enable_disable:
+            self.profiles_combobox.setCurrentIndex(self.profiles_combobox.findText('Custom'))
         elif self.parent.choosen_profile != 'None':
-            self.profiles.setCurrentIndex(self.profiles.findText(self.parent.choosen_profile))
+            self.profiles_combobox.setCurrentIndex(self.profiles_combobox.findText(self.parent.choosen_profile))
         else:
-            self.profiles.setCurrentIndex(self.profiles.findText('None'))
+            self.profiles_combobox.setCurrentIndex(self.profiles_combobox.findText('None'))
 
-        self.profiles.currentIndexChanged.connect(self.changeCustomSettingsOnProfile)
+        self.profiles_combobox.currentIndexChanged.connect(self.change_custom_settings_on_profile)
         
 
 
-        self.customsettings = QCheckBox()
-        self.customsettings.stateChanged.connect(self.customSettings)
+        self.custom_settings_checkbox = QCheckBox()
+        self.custom_settings_checkbox.stateChanged.connect(self.custom_settings_enable_disable)
 
-        self.intervaltime = QLineEdit(str(self.parent.intervaltime))
-        self.intervaltime.setDisabled(True)
+        self.interval_time_lineedit = QLineEdit(str(self.parent.intervaltime))
+        self.interval_time_lineedit.setDisabled(True)
          
-        self.serialspeed = QComboBox()
+        self.serial_speed_combobox = QComboBox()
         for sp in serial_speeds:
-            self.serialspeed.addItem(str(sp))
-        if self.boolConfigIsOK:
-            self.serialspeed.setCurrentIndex(self.serialspeed.findText(str(self.parent.serial_port.baudrate)))
+            self.serial_speed_combobox.addItem(str(sp))
+        if self.boolean_config_is_ok:
+            self.serial_speed_combobox.setCurrentIndex(self.serial_speed_combobox.findText(str(self.parent.serial_port.baudrate)))
         else:
-            self.serialspeed.setCurrentIndex(self.serialspeed.findText('9600'))
-        self.serialspeed.setDisabled(True)
+            self.serial_speed_combobox.setCurrentIndex(self.serial_speed_combobox.findText('9600'))
+        self.serial_speed_combobox.setDisabled(True)
 
-        self.databits = QComboBox()
+        self.databits_combobox = QComboBox()
         for db in bytesize_values:
-            self.databits.addItem(str(db))
-        if self.boolConfigIsOK :
-            self.databits.setCurrentIndex(self.databits.findText(str(self.parent.serial_port.bytesize)))
+            self.databits_combobox.addItem(str(db))
+        if self.boolean_config_is_ok :
+            self.databits_combobox.setCurrentIndex(self.databits_combobox.findText(str(self.parent.serial_port.bytesize)))
         else:
-            self.databits.setCurrentIndex(self.databits.findText('8'))
-        self.databits.setDisabled(True)
+            self.databits_combobox.setCurrentIndex(self.databits_combobox.findText('8'))
+        self.databits_combobox.setDisabled(True)
 
-        self.stopbits = QComboBox()
+        self.stopbits_combobox = QComboBox()
         for sb in stop_values:
-            self.stopbits.addItem(str(sb))
-        if self.boolConfigIsOK :
+            self.stopbits_combobox.addItem(str(sb))
+        if self.boolean_config_is_ok :
             sb =  str(self.parent.serial_port.stopbits).replace('.',',')
-            self.stopbits.setCurrentIndex(self.stopbits.findText(str(sb)))
+            self.stopbits_combobox.setCurrentIndex(self.stopbits_combobox.findText(str(sb)))
         else:
-            self.stopbits.setCurrentIndex(self.stopbits.findText('1'))
-        self.stopbits.setDisabled(True)
+            self.stopbits_combobox.setCurrentIndex(self.stopbits_combobox.findText('1'))
+        self.stopbits_combobox.setDisabled(True)
 
-        self.parity = QComboBox()
+        self.parity_combobox = QComboBox()
         for par in parity_values:
-            self.parity.addItem(str(par))
-        if self.boolConfigIsOK :
+            self.parity_combobox.addItem(str(par))
+        if self.boolean_config_is_ok :
             table = { 'O':'Odd','E':'Even','N':'None'}
             xxx = [ item for key , item in table.items() if self.parent.serial_port.parity == key]
-            self.parity.setCurrentIndex(parity_values.index(xxx[0]))
+            self.parity_combobox.setCurrentIndex(parity_values.index(xxx[0]))
         else:
-            self.parity.setCurrentIndex(self.parity.findText("None"))
-        self.parity.setDisabled(True)
+            self.parity_combobox.setCurrentIndex(self.parity_combobox.findText("None"))
+        self.parity_combobox.setDisabled(True)
 
-        self.flowcontrol = QComboBox()
+        self.flowcontrol_combobox = QComboBox()
         for fc in flow_control_values:
-            self.flowcontrol.addItem(str(fc))
-        if self.boolConfigIsOK :
+            self.flowcontrol_combobox.addItem(str(fc))
+        if self.boolean_config_is_ok :
             if self.parent.serial_port.xonxoff :
-                self.flowcontrol.setCurrentIndex(self.flowcontrol.findText("XON/XOFF"))
+                self.flowcontrol_combobox.setCurrentIndex(self.flowcontrol_combobox.findText("XON/XOFF"))
             elif self.parent.serial_port.rtscts:
-                self.flowcontrol.setCurrentIndex(self.flowcontrol.findText("RTS/CTS"))
+                self.flowcontrol_combobox.setCurrentIndex(self.flowcontrol_combobox.findText("RTS/CTS"))
             else:
-                self.flowcontrol.setCurrentIndex(self.flowcontrol.findText("None"))
+                self.flowcontrol_combobox.setCurrentIndex(self.flowcontrol_combobox.findText("None"))
         else:
-            self.flowcontrol.setCurrentIndex(self.flowcontrol.findText("None"))
-        self.flowcontrol.setDisabled(True)
+            self.flowcontrol_combobox.setCurrentIndex(self.flowcontrol_combobox.findText("None"))
+        self.flowcontrol_combobox.setDisabled(True)
         
-        self.nickname = QLineEdit(self.parent.nickname)
-        if self.settingsparser.has_option('default','nickname'):
-            nickname = self.settingsparser.get('default','nickname')
+        self.nickname_lineedit = QLineEdit(self.parent.nickname)
+        if self.settings_parser.has_option('default', 'nickname'):
+            nickname = self.settings_parser.get('default', 'nickname')
             if type(nickname) == str:
                 nickname = nickname.decode('utf-8')
-            self.nickname.setText(self.settingsparser.get('default','nickname'))
+            self.nickname_lineedit.setText(self.settings_parser.get('default', 'nickname'))
         
-        self.savefolder = QLineEdit(self.parent.default_save_folder)
-        if self.settingsparser.has_option('default','default_save_folder'):
-            folder = self.settingsparser.get('default','default_save_folder')
+        self.save_folder_editline = QLineEdit(self.parent.default_save_folder)
+        if self.settings_parser.has_option('default', 'default_save_folder'):
+            folder = self.settings_parser.get('default', 'default_save_folder')
             if type(folder) == str :
                 folder = folder.decode('utf-8')
-            self.savefolder.setText(folder)
+            self.save_folder_editline.setText(folder)
 
-        self.buttondir = QPushButton()
-        self.buttondir.setIcon(QIcon(icons_folder+'folder.png'))
-        self.buttondir.clicked.connect(self.choose_save_dir)
+        self.dir_browser_button = QPushButton()
+        self.dir_browser_button.setIcon(QIcon(icons_folder + 'folder.png'))
+        self.dir_browser_button.clicked.connect(self.choose_save_dir)
         
-        self.hBoxLayout = QHBoxLayout()
-        self.hBoxLayout.addWidget(self.savefolder)
-        self.hBoxLayout.addWidget(self.buttondir)
-        self.hBoxContainer = QWidget()
-        self.hBoxContainer.setLayout(self.hBoxLayout)
+        self.horizontal_box_hboxlayout = QHBoxLayout()
+        self.horizontal_box_hboxlayout.addWidget(self.save_folder_editline)
+        self.horizontal_box_hboxlayout.addWidget(self.dir_browser_button)
+        self.horizontal_box_container_widget = QWidget()
+        self.horizontal_box_container_widget.setLayout(self.horizontal_box_hboxlayout)
 
-        self.enableACP127 = QCheckBox()
-        self.enableACP127.stateChanged.connect(self.enableFuncACP127)
+        self.enable_ACP127 = QCheckBox()
+        self.enable_ACP127.stateChanged.connect(self.enable_functionality_ACP127)
         if self.parent.acp127:
-            self.enableACP127.setChecked(True)
+            self.enable_ACP127.setChecked(True)
         
         
 
         
-        self.grid = QFormLayout()
-        self.grid.addRow(FORMLAYOUT_SERIAL_TITLE+":",self.serialDropDown)
-        self.grid.addRow(FORMLAYOUT_PROFILE_TITLE+":",self.profiles)
-        self.grid.addRow(FORMLAYOUT_CUSTOM_SERIAL_SETTINGS_TITLE,self.customsettings)
-        self.grid.addRow(FORMLAYOUT_INTERVAL_TIME_TITLE+":",self.intervaltime)
-        self.grid.addRow(FORMLAYOUT_SERIAL_SPEED_TITLE+"(baud):",self.serialspeed)
-        self.grid.addRow(FORMLAYOUT_DATA_BITS_TITLE+":",self.databits)
-        self.grid.addRow(FORMLAYOUT_STOP_BITS_TITLE+":",self.stopbits)
-        self.grid.addRow(FORMLAYOUT_PARITY_TITLE+":",self.parity)
-        self.grid.addRow(FORMLAYOUT_FLOWCONTROL_TITLE+":",self.flowcontrol)
-        self.grid.addRow(FORMLAYOUT_ENABLE_ACP127_TITLE+" ACP-127",self.enableACP127)
-        self.grid.addRow(FORMLAYOUT_NICKNAME_TITLE+":",self.nickname)
-        self.grid.addRow(FORMLAYOUT_SAVE_FOLDER_FILE_TITLE+":",self.hBoxContainer)
-        self.grid.addRow("",self.buttonbox)
-        self.setLayout(self.grid)
+        self.grid_form_layout = QFormLayout()
+        self.grid_form_layout.addRow(FORMLAYOUT_SERIAL_TITLE + ":", self.serial_dropdown)
+        self.grid_form_layout.addRow(FORMLAYOUT_PROFILE_TITLE + ":", self.profiles_combobox)
+        self.grid_form_layout.addRow(FORMLAYOUT_CUSTOM_SERIAL_SETTINGS_TITLE, self.custom_settings_checkbox)
+        self.grid_form_layout.addRow(FORMLAYOUT_INTERVAL_TIME_TITLE + ":", self.interval_time_lineedit)
+        self.grid_form_layout.addRow(FORMLAYOUT_SERIAL_SPEED_TITLE + "(baud):", self.serial_speed_combobox)
+        self.grid_form_layout.addRow(FORMLAYOUT_DATA_BITS_TITLE + ":", self.databits_combobox)
+        self.grid_form_layout.addRow(FORMLAYOUT_STOP_BITS_TITLE + ":", self.stopbits_combobox)
+        self.grid_form_layout.addRow(FORMLAYOUT_PARITY_TITLE + ":", self.parity_combobox)
+        self.grid_form_layout.addRow(FORMLAYOUT_FLOWCONTROL_TITLE + ":", self.flowcontrol_combobox)
+        self.grid_form_layout.addRow(FORMLAYOUT_ENABLE_ACP127_TITLE + " ACP-127", self.enable_ACP127)
+        self.grid_form_layout.addRow(FORMLAYOUT_NICKNAME_TITLE + ":", self.nickname_lineedit)
+        self.grid_form_layout.addRow(FORMLAYOUT_SAVE_FOLDER_FILE_TITLE + ":", self.horizontal_box_container_widget)
+        self.grid_form_layout.addRow("", self.button_box_dialog)
+        self.setLayout(self.grid_form_layout)
         self.show()
 
 
@@ -207,11 +207,11 @@ class SettingsWindow(QDialog):
 
         if fname.exec_():
             filename = fname.selectedFiles()[0]
-            self.savefolder.setText(filename)
+            self.save_folder_editline.setText(filename)
 
 
-    def enableFuncACP127(self):
-        if self.enableACP127.isChecked():
+    def enable_functionality_ACP127(self):
+        if self.enable_ACP127.isChecked():
             self.parent.acp127 = True
         else:
             self.parent.acp127 = False
@@ -221,71 +221,71 @@ class SettingsWindow(QDialog):
 
 
 
-    def applyChanges(self):
+    def apply_setting_changes(self):
         
         res = None
-        self.parent.custom_settings = self.customsettings.isChecked()
-        self.parent.choosen_profile = self.profiles.currentText()
-        if self.parent.custom_settings :
+        self.parent.custom_settings_enable_disable = self.custom_settings_checkbox.isChecked()
+        self.parent.choosen_profile = self.profiles_combobox.currentText()
+        if self.parent.custom_settings_enable_disable :
             self.parent.choosen_profile = "Custom"
             
         
-        if self.nickname.text() != "":
-            self.parent.nickname = self.nickname.text()
-        if self.savefolder.text() != "" :
-            self.parent.default_save_folder = self.savefolder.text()
-        self.parent.intervaltime = int(self.intervaltime.text())
-        if  self.flowcontrol.currentText() ==  "XON/XOFF":
+        if self.nickname_lineedit.text() != "":
+            self.parent.nickname = self.nickname_lineedit.text()
+        if self.save_folder_editline.text() != "" :
+            self.parent.default_save_folder = self.save_folder_editline.text()
+        self.parent.intervaltime = int(self.interval_time_lineedit.text())
+        if  self.flowcontrol_combobox.currentText() == "XON/XOFF":
             x_control = True
         else:
             x_control = False
 
-        if self.flowcontrol.currentText() == "RTS/CTS":
+        if self.flowcontrol_combobox.currentText() == "RTS/CTS":
             r_control = True
         else:
             r_control = False
         if self.parent.receive == None:
-            res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
+            res = self.lib.set_serial(port=self.serial_dropdown.currentText(), baudrate=self.serial_speed_combobox.currentText(), bytesize=self.databits_combobox.currentText(), stopbits=self.stopbits_combobox.currentText(), parity=self.parity_combobox.currentText(), xonxoff = x_control, rtscts = r_control)
         else:
             self.parent.receive.loopRun = False
             self.parent.receive.wait()
             self.parent.receive = None
-            res = self.lib.set_serial(port=self.serialDropDown.currentText(),baudrate=self.serialspeed.currentText(),bytesize=self.databits.currentText(),stopbits=self.stopbits.currentText(),parity=self.parity.currentText(), xonxoff = x_control , rtscts = r_control)
+            res = self.lib.set_serial(port=self.serial_dropdown.currentText(), baudrate=self.serial_speed_combobox.currentText(), bytesize=self.databits_combobox.currentText(), stopbits=self.stopbits_combobox.currentText(), parity=self.parity_combobox.currentText(), xonxoff = x_control, rtscts = r_control)
         if type(res) == OSError:
             self.parent.statusBar.showMessage(str(res),5000)
         if type(res) != None and type(res) != OSError:
             self.parent.serial_port = res 
-            self.parent.startThreads()
+            self.parent.start_threads()
             self.parent.statusBar.showMessage(MSG_SERIAL_INT_STARTED%self.parent.serial_port.port)
         else:
             print("Sth wrong just happend...")
 
 
-    def changeCustomSettingsOnProfile(self):
-        if self.profiles.currentText() != 'None':
+    def change_custom_settings_on_profile(self):
+        if self.profiles_combobox.currentText() != 'None':
 
-            section = self.profiles.currentText()
-            self.intervaltime.setText(self.configparser.get(section,"interval"))
-            self.serialspeed.setCurrentIndex( self.serialspeed.findText( self.configparser.get(section,"serialspeed") ))
-            self.databits.setCurrentIndex( self.databits.findText(self.configparser.get(section,"bytesize")))
-            self.stopbits.setCurrentIndex(self.stopbits.findText( self.configparser.get(section,"stopbits")))
-            self.parity.setCurrentIndex (self.parity.findText(self.configparser.get(section,"parity") ))
-            if self.configparser.get(section,"xonxoff") == 'True' :
-                self.flowcontrol.setCurrentIndex(self.flowcontrol.findText("XON/XOFF"))
-            elif self.configparser.get(section,"rtscts") == 'True':
-                self.flowcontrol.setCurrentIndex(self.flowcontrol.findText("RTS/CTS"))
+            section = self.profiles_combobox.currentText()
+            self.interval_time_lineedit.setText(self.config_parser.get(section, "interval"))
+            self.serial_speed_combobox.setCurrentIndex(self.serial_speed_combobox.findText(self.config_parser.get(section, "serialspeed")))
+            self.databits_combobox.setCurrentIndex(self.databits_combobox.findText(self.config_parser.get(section, "bytesize")))
+            self.stopbits_combobox.setCurrentIndex(self.stopbits_combobox.findText(self.config_parser.get(section, "stopbits")))
+            self.parity_combobox.setCurrentIndex (self.parity_combobox.findText(self.config_parser.get(section, "parity")))
+            if self.config_parser.get(section, "xonxoff") == 'True' :
+                self.flowcontrol_combobox.setCurrentIndex(self.flowcontrol_combobox.findText("XON/XOFF"))
+            elif self.config_parser.get(section, "rtscts") == 'True':
+                self.flowcontrol_combobox.setCurrentIndex(self.flowcontrol_combobox.findText("RTS/CTS"))
             else:
-                self.flowcontrol.setCurrentIndex(self.flowcontrol.findText("None"))
-            if self.configparser.get(section,"acp127") == "True" :
-                self.enableACP127.setChecked(True)
-        elif self.profiles.currentText() == "None":
-            self.serialspeed.setCurrentIndex(self.serialspeed.findText('9600'))
-            self.intervaltime.setText(str(self.parent.intervaltime))
-            self.databits.setCurrentIndex(self.databits.findText('8'))
-            self.stopbits.setCurrentIndex(self.stopbits.findText('1'))
-            self.parity.setCurrentIndex(self.parity.findText('None'))
-            self.flowcontrol.setCurrentIndex(self.flowcontrol.findText('None'))
-            self.enableACP127.setChecked(False)
+                self.flowcontrol_combobox.setCurrentIndex(self.flowcontrol_combobox.findText("None"))
+            if self.config_parser.get(section, "acp127") == "True" :
+                self.enable_ACP127.setChecked(True)
+        elif self.profiles_combobox.currentText() == "None":
+            self.serial_speed_combobox.setCurrentIndex(self.serial_speed_combobox.findText('9600'))
+            self.interval_time_lineedit.setText(str(self.parent.intervaltime))
+            self.databits_combobox.setCurrentIndex(self.databits_combobox.findText('8'))
+            self.stopbits_combobox.setCurrentIndex(self.stopbits_combobox.findText('1'))
+            self.parity_combobox.setCurrentIndex(self.parity_combobox.findText('None'))
+            self.flowcontrol_combobox.setCurrentIndex(self.flowcontrol_combobox.findText('None'))
+            self.enable_ACP127.setChecked(False)
             
             
 
@@ -293,18 +293,18 @@ class SettingsWindow(QDialog):
         
 
 
-    def customSettings(self):
-        if self.customsettings.isChecked():
-            self.intervaltime.setDisabled(False)
-            self.serialspeed.setDisabled(False)
-            self.databits.setDisabled(False)
-            self.stopbits.setDisabled(False)
-            self.parity.setDisabled(False)
-            self.flowcontrol.setDisabled(False)
+    def custom_settings_enable_disable(self):
+        if self.custom_settings_checkbox.isChecked():
+            self.interval_time_lineedit.setDisabled(False)
+            self.serial_speed_combobox.setDisabled(False)
+            self.databits_combobox.setDisabled(False)
+            self.stopbits_combobox.setDisabled(False)
+            self.parity_combobox.setDisabled(False)
+            self.flowcontrol_combobox.setDisabled(False)
         else:
-            self.intervaltime.setDisabled(True)
-            self.serialspeed.setDisabled(True)
-            self.databits.setDisabled(True)
-            self.stopbits.setDisabled(True)
-            self.parity.setDisabled(True)
-            self.flowcontrol.setDisabled(True)
+            self.interval_time_lineedit.setDisabled(True)
+            self.serial_speed_combobox.setDisabled(True)
+            self.databits_combobox.setDisabled(True)
+            self.stopbits_combobox.setDisabled(True)
+            self.parity_combobox.setDisabled(True)
+            self.flowcontrol_combobox.setDisabled(True)

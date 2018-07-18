@@ -1,12 +1,7 @@
-from PySide.QtCore import *
-from PySide.QtGui import *
-import time
-import serial
 import os
-import base64
-import json
-import datetime
 
+import serial
+from PySide.QtCore import *
 
 __mod_comports = None
 __mod_glob = None
@@ -14,13 +9,10 @@ __serial_ports = {}
 
 
 
-class initApp(QThread):
+class InitApp(QThread):
 
     def __init__(self,parent):
         QThread.__init__(self)
-        #self.nickname = parent.__nickname
-        #self.default_save_folder = parent.__default_save_folder
-        #self.serial_port = parent.__serial_port
         self.__serial_ports = {}
 
 
@@ -66,7 +58,7 @@ class initApp(QThread):
             __total_ports.append(self.__serial_ports[ports])
         return __total_ports
 
-    def set_serial(self,**kwargs):
+    def set_serial(self, **kwargs):
 
             
         try:
