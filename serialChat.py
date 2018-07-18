@@ -176,8 +176,15 @@ class MainWindow(QMainWindow):
             self.receive.endRCV.connect(self.endRCV)
             self.receive.catchESF.connect(self.catchESF)
             self.receive.catchEOP.connect(self.catchEOP)
+            self.receive.interfaceProblem.connect(self.interfaceproblem)
 
             self.receive.start()
+
+    def interfaceproblem(self,exception):
+        self.statusBar.showMessage(exception,time_show_msg_on_statusbar)
+        self.receive.loopRun = False
+        self.receive.wait()
+        self.receive = None
 
 
     def clearJunkData(self):

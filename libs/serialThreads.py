@@ -159,6 +159,7 @@ class Receive(QThread):
     endRCV = Signal()
     catchESF = Signal(str)
     catchEOP = Signal(int)
+    interfaceProblem = Signal(str)
 
     def __init__(self,parent):
         QThread.__init__(self)
@@ -189,7 +190,12 @@ class Receive(QThread):
         while self.loopRun:
         
             
-            iswait = self.ser.inWaiting()
+            try:
+                iswait = self.ser.inWaiting()
+            except Exception as e:
+                print(e)
+                self.interfaceProblem.emit(str(e))
+            
             
             if iswait > 0:
                 #self.emit(SIGNAL('startRCV(int)'),self.ser.inWaiting())
