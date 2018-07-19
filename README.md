@@ -26,7 +26,7 @@ __github__:
 https://github.com/pyserial/pyserial
 
 
-**For compatibility issues with WIN_XP**
+**For compatibility issues with WIN_XP it uses pyserial v2.7**
 
 **It doesn't work with higher versions of pyserial.**
 
