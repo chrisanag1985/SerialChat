@@ -77,7 +77,7 @@ python2.7 serialChat.py
 
 ---
 
-##Usage
+## Usage
 
 
 After you start the application, you can go to the *settings* menu item and configure the *serialChat* with your specific configuration.
