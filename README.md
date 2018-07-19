@@ -20,18 +20,16 @@ pip:
 pip2 install pyside
 ```
 
-and the *pyserial* project:
+the *pyserial* project:
 
 __github__:
 https://github.com/pyserial/pyserial
 
 
----
-
 **For compatibility issues with WIN_XP**
 
 **It doesn't work with higher versions of pyserial.**
----
+
 
 __pip__ :
 
