@@ -1,5 +1,4 @@
 # SerialChat
-===============
 
 Python Multithreading Chat over Serial Port with Qt interface and Encryption
 
@@ -31,7 +30,6 @@ https://github.com/pyserial/pyserial
 
 **For compatibility issues with WIN_XP**
 
-**Attention:**
 **It doesn't work with higher versions of pyserial.**
 ---
 
