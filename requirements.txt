@@ -1,2 +1,3 @@
 PySide
 pyserial==2.7
+pycrypto
