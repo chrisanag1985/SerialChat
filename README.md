@@ -26,9 +26,15 @@ https://github.com/pyserial/pyserial
 
 pip:
 ```bash
-pip2 install pyserial
+pip2 install pyserial==2.7
 ```
 
+and the *pycrypto* :
+
+pip:
+```bash
+pip2 install pycrypto
+```
 **OR** just 
 ```bash
 pip2 install -r requirements.txt
