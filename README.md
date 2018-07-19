@@ -14,7 +14,6 @@ The *serialChat* is on **Python 2.7**
 The *serialChat* depends on *pyside* project which is available on:
 
 
-
 pip:
 ```bash
 pip2 install pyside
@@ -28,6 +27,11 @@ https://github.com/pyserial/pyserial
 pip:
 ```bash
 pip2 install pyserial
+```
+
+**OR** just 
+```bash
+pip2 install -r requirements.txt
 ```
 
 **!!!To work and on WIN XP the version of the pyserial must be 2.7**
