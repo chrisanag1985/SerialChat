@@ -5,6 +5,8 @@ import time
 
 from PySide.QtCore import *
 
+import libs.crypt as crypt
+
 """
 possible types:
 msg - message
@@ -19,6 +21,9 @@ time_to_sleep_receive_loop = float(settings_parser.get("app_settings", "time_to_
 time_to_sleep_after_esf = float(settings_parser.get("app_settings", "time_to_sleep_after_esf"))
 acp127_prefix = str(settings_parser.get("acp_127", "prefix"))
 acp127_postfix = str(settings_parser.get("acp_127", "postfix"))
+
+
+
 
 class Send(QThread):
     
@@ -38,6 +43,11 @@ class Send(QThread):
         self.interval_time = parent.intervaltime
         self.progressbar = parent.progress_bar_widget
 
+        if self.parent.isEncryptionEnabled:
+            self.Cipher = crypt.AESEncDec()
+            self.key = self.parent.encryption_key
+
+
     def run(self):
 
         if type(self.text) == unicode:
@@ -48,8 +58,6 @@ class Send(QThread):
         remain = full_size%chunk_size
         size = chunk_size 
         t2s = ''
-        if self.parent.acp127:
-            t2s = acp127_prefix 
         sending_data = {}
         sending_data['type'] = self.type 
         sending_data['filename'] = self.filename 
@@ -59,11 +67,14 @@ class Send(QThread):
         sending_data['remain'] = remain
         try:
             t2s += json.dumps(sending_data)
+            if self.parent.isEncryptionEnabled:
+                t2s = self.Cipher.encrypt(key=self.parent.encryption_key,text=t2s)
+
         except Exception as e:
             print(e)
         t2s += "_E_s_F_"
         if self.parent.acp127:
-            t2s += acp127_postfix 
+            t2s = acp127_prefix + t2s + acp127_postfix
         self.ser.write(t2s)
         self.ser.flush()
         time.sleep(time_to_sleep_after_esf)
@@ -74,19 +85,19 @@ class Send(QThread):
         for i in range(0,pieces+1):
             if i== pieces and remain !=0:
                 t2s = ''
-                if self.parent.acp127:
-                    t2s =  acp127_prefix
                 sending_data = {}
                 texttmp = self.text[-(remain):]
                 self.counter += len(texttmp)
                 sending_data['data_remain'] = base64.b64encode(texttmp)
                 try:
                     t2s += json.dumps(sending_data)
+                    if self.parent.isEncryptionEnabled:
+                        t2s = self.Cipher.encrypt(key=self.parent.encryption_key,text=t2s)
                 except Exception as e:
                     print(e) 
                 t2s += "_E_0_F_"
                 if self.parent.acp127:
-                    t2s += acp127_postfix 
+                    t2s = acp127_prefix + t2s + acp127_postfix
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.send_data_signal.emit(self.counter)
@@ -95,16 +106,16 @@ class Send(QThread):
                 self.ser.flushOutput()
             elif i == pieces and remain == 0:
                 t2s = ''
-                if self.parent.acp127:
-                    t2s = acp127_prefix
                 sending_data['data_remain'] = base64.b64encode("_")
                 try:
                     t2s += json.dumps(sending_data)
+                    if self.parent.isEncryptionEnabled:
+                        t2s = self.Cipher.encrypt(key=self.parent.encryption_key,text=t2s)
                 except Exception as e:
                     print(e)
                 t2s += "_E_0_F_"
                 if self.parent.acp127:
-                    t2s += acp127_postfix 
+                    t2s = acp127_prefix + t2s +acp127_postfix
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.end_data_signal.emit()
@@ -112,19 +123,19 @@ class Send(QThread):
                 self.ser.flushOutput()
             else:
                 t2s = ''
-                if self.parent.acp127:
-                    t2s = acp127_prefix
                 sending_data = {}
                 texttmp = self.text[size*i:size*(i+1)]
                 self.counter += len(texttmp)
                 sending_data['data_'+str(i)] =  base64.b64encode(texttmp)
                 try:
                     t2s += json.dumps(sending_data)
+                    if self.parent.isEncryptionEnabled:
+                        t2s = self.Cipher.encrypt(key=self.parent.encryption_key,text=t2s)
                 except Exception as e:
                     print(e)
                 t2s += "_E_0_P_"
                 if self.parent.acp127:
-                    t2s += acp127_postfix
+                    t2s = acp127_prefix + t2s + acp127_postfix
                 self.ser.write(t2s)
                 self.ser.flush()
                 self.send_data_signal.emit(self.counter)
@@ -153,6 +164,10 @@ class Receive(QThread):
         self.parent = parent
         self.loop_run = True
         self.tdata = ''
+
+        if self.parent.isEncryptionEnabled:
+            self.Cipher = crypt.AESEncDec()
+            self.key = self.parent.encryption_key
 
     def clear_vars(self):
         self.data = {}
@@ -184,11 +199,12 @@ class Receive(QThread):
                     if self.parent.acp127 :
                         self.tdata = self.tdata.replace(acp127_prefix,"")
                         self.tdata = self.tdata.replace(acp127_postfix,"")
-                        
 
                     self.tdata = self.tdata.replace("_E_s_F_","")
-                    self.catch_esf_signal.emit(self.tdata)
                     try:
+                        if self.parent.isEncryptionEnabled:
+                            self.tdata = self.Cipher.decrypt(self.parent.encryption_key,self.tdata)
+                        self.catch_esf_signal.emit(self.tdata)
                         self.tdata = json.loads(self.tdata)
                         self.size = self.tdata['size']
                         self.filename = self.tdata['filename']
@@ -197,8 +213,8 @@ class Receive(QThread):
                         self.remain = self.tdata['remain']
                         self.type = self.tdata['type']
                         self.tdata=''
-                    except Exception:
-                        print(Exception)
+                    except Exception as e:
+                        print(e)
                         self.tdata=''
 
                 if "_E_0_P_" in self.tdata:
@@ -207,7 +223,9 @@ class Receive(QThread):
                         self.tdata = self.tdata.replace(acp127_postfix,"")
                     self.tdata  = self.tdata.replace("_E_0_P_","")
                     try:
-                        self.tdata = json.loads(self.tdata) 
+                        if self.parent.isEncryptionEnabled:
+                            self.tdata = self.Cipher.decrypt(self.parent.encryption_key,self.tdata)
+                        self.tdata = json.loads(self.tdata)
                         key,value = self.tdata.popitem() 
                         value = base64.b64decode(value)
                     except Exception:
@@ -224,7 +242,9 @@ class Receive(QThread):
                         self.tdata = self.tdata.replace(acp127_postfix,"")
                     self.tdata  = self.tdata.replace("_E_0_F_","")
                     try:
-                        self.tdata = json.loads(self.tdata) 
+                        if self.parent.isEncryptionEnabled:
+                            self.tdata = self.Cipher.decrypt(self.parent.encryption_key,self.tdata)
+                        self.tdata = json.loads(self.tdata)
                         key,value = self.tdata.popitem() 
                         value = base64.b64decode(value)
                     except Exception:

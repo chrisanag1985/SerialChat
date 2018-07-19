@@ -74,6 +74,8 @@ class MainWindow(QMainWindow):
         self.receive = None
         self.send = None
         self.acp127 = False
+        self.isEncryptionEnabled = False
+        self.encryption_key = None
         self.choosen_profile = choosen_profile
         self.custom_settings = custom_settings
 
