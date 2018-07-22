@@ -13,7 +13,7 @@ import libs.serialThreads as lib_thread
 import libs.settingsDialog as settings_Dialog
 
 icons_folder = "resources/icons/"
-nickname = "Guest"
+nickname = None
 default_save_folder = os.path.expanduser('~')
 serial_port = None
 intervaltime = 6
@@ -57,6 +57,9 @@ MSG_DATA_HAS_BEEN_SENT = language.get(lang,"MSG_DATA_HAS_BEEN_SENT").decode('utf
 MSG_RECEIVING_DATA_HAS_END = language.get(lang,"MSG_RECEIVING_DATA_HAS_END").decode('utf-8')
 MSG_RECEIVED_FILE_FROM = language.get(lang,"MSG_RECEIVED_FILE_FROM").decode('utf-8')
 MSG_RECEIVING_DATA = language.get(lang,"MSG_RECEIVING_DATA").decode('utf-8')
+USERS_TITLE = language.get(lang,"USERS_TITLE").decode('utf-8')
+USERS_LAST_SEEN = language.get(lang,"USERS_LAST_SEEN").decode('utf-8')
+USERS_COORDINATES = language.get(lang,"USERS_COORDINATES").decode('utf-8')
 APP_TITLE = language.get(lang,"APP_TITLE").decode('utf-8')
 MSGBOX_HELP_TITLE = language.get(lang,"MSGBOX_HELP_TITLE").decode('utf-8')
 MSGBOX_WARNING_TITLE = language.get(lang,"MSGBOX_WARNING_TITLE").decode('utf-8')
@@ -67,6 +70,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(self.__class__,self).__init__()
         self.nickname = nickname
+        self.other_nicknames = {}
         self.default_save_folder = default_save_folder
         self.serial_port = serial_port
         self.interval_time = intervaltime
@@ -125,8 +129,22 @@ class MainWindow(QMainWindow):
         self.layout_central_widget.addWidget(self.list_widget)
         self.layout_central_widget.addWidget(self.input_text_textedit)
         self.layout_central_widget.addLayout(self.horizontal_button_layout)
-        self.progress_bar_widget = QProgressBar()
+        self.right_dockwidget = QDockWidget()
+        self.right_dockwidget.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        self.online_vertical_layout = QVBoxLayout()
+        self.online_label = QLabel(USERS_TITLE)
+        self.online_list_widget = QListWidget()
+        self.online_multi_widget = QWidget()
+        self.online_vertical_layout.addWidget(self.online_label)
+        self.online_vertical_layout.addWidget(self.online_list_widget)
+        self.online_multi_widget.setLayout(self.online_vertical_layout)
+        self.right_dockwidget.setWidget(self.online_multi_widget)
+        self.addDockWidget(Qt.RightDockWidgetArea , self.right_dockwidget)
+
+
+
         self.down_dockwidget = QDockWidget()
+        self.progress_bar_widget = QProgressBar()
         self.down_dockwidget.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.down_dockwidget.setWidget(self.progress_bar_widget)
         self.addDockWidget(Qt.BottomDockWidgetArea, self.down_dockwidget)
@@ -136,7 +154,7 @@ class MainWindow(QMainWindow):
         window_widget = QWidget()
         window_widget.setLayout(self.layout_central_widget)
         self.setCentralWidget(window_widget)
-        self.setGeometry(200,200,500,500)
+        self.setGeometry(200,200,900,600)
         self.setWindowTitle(APP_TITLE)
         self.setWindowIcon(QIcon(icons_folder+'chat.ico'))
         self.show()
@@ -341,6 +359,21 @@ class MainWindow(QMainWindow):
                 self.list_widget.setTextColor('green')
             elif self.receive.type=='file':
                 self.list_widget.setTextColor('red')
+
+            if not self.receive.nickname in self.other_nicknames.keys():
+                dtime = datetime.datetime.now().strftime(date_format)
+                self.other_nicknames[self.receive.nickname] = dtime
+                tmp_item = QListWidgetItem(self.receive.nickname)
+                tmp_text = self.receive.nickname+"\n"+USERS_LAST_SEEN+":"+dtime+"\n"+USERS_COORDINATES+":"
+                tmp_item.setText(tmp_text)
+                if self.online_list_widget.count()%2 == 0:
+                    tmp_item.setBackground(Qt.gray)
+                self.online_list_widget.addItem(tmp_item)
+            else:
+                dtime = datetime.datetime.now().strftime(date_format)
+                self.other_nicknames[self.receive.nickname] = dtime
+                aaaa= self.online_list_widget.findItems("^"+self.receive.nickname+"\n.*\n.*$", Qt.MatchRegExp)
+                aaaa[0].setText(self.receive.nickname+"\n"+USERS_LAST_SEEN+":"+dtime+"\n"+USERS_COORDINATES+":")
             self.list_widget.append(tt)
         except Exception as e:
             print(e)

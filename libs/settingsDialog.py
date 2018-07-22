@@ -1,8 +1,10 @@
 import ConfigParser
 
 from PySide.QtGui import *
+from Crypto.Hash import MD5
 
 import libserial
+import datetime
 
 serial_speeds = ["1200","2400","4800","9600","14400","19200"]
 parity_values = ["None","Odd","Even"]
@@ -151,12 +153,18 @@ class SettingsWindow(QDialog):
             self.flowcontrol_combobox.setCurrentIndex(self.flowcontrol_combobox.findText("None"))
         self.flowcontrol_combobox.setDisabled(True)
         
-        self.nickname_lineedit = QLineEdit(self.parent.nickname)
+        self.nickname_lineedit = QLineEdit()
         if self.settings_parser.has_option('default', 'nickname'):
             nickname = self.settings_parser.get('default', 'nickname')
             if type(nickname) == str:
                 nickname = nickname.decode('utf-8')
             self.nickname_lineedit.setText(self.settings_parser.get('default', 'nickname'))
+        else:
+            if self.parent.nickname is None:
+                self.nickname_lineedit.setText("Guest_"+ MD5.new(str(datetime.datetime.now())).digest().encode('hex')[:5])
+            else:
+                self.nickname_lineedit.setText(self.parent.nickname)
+
         
         self.save_folder_editline = QLineEdit(self.parent.default_save_folder)
         if self.settings_parser.has_option('default', 'default_save_folder'):
