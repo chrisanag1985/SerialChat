@@ -32,8 +32,9 @@ lang = str(settings_parser.get("default", "lang"))
 language = ConfigParser.ConfigParser()
 language.read("resources/languages/"+lang+".ini")
 
-MENU_SETTINGS = language.get(lang,"MENU_SETTINGS").decode('utf-8')
+MENU_FILE = language.get(lang, "MENU_FILE").decode('utf-8')
 MENU_OPEN_SETTINGS = language.get(lang,"MENU_OPEN_SETTINGS").decode('utf-8')
+MENU_SAVE_DIALOG = language.get(lang,"MENU_SAVE_DIALOG").decode('utf-8')
 MENU_SEND_FILE = language.get(lang,"MENU_SEND_FILE").decode('utf-8')
 MENU_CHOOSE_FILE_TO_SEND = language.get(lang,"MENU_CHOOSE_FILE_TO_SEND").decode('utf-8')
 MENU_HELP = language.get(lang,"MENU_HELP").decode('utf-8')
@@ -85,10 +86,13 @@ class MainWindow(QMainWindow):
 
         
         self.menu_menubar = QMenuBar()
-        self.menu_settings = self.menu_menubar.addMenu(MENU_SETTINGS)
+        self.menu_file = self.menu_menubar.addMenu(MENU_FILE)
         self.qaction_open_settings = QAction(MENU_OPEN_SETTINGS, self)
         self.qaction_open_settings.triggered.connect(self.open_settings)
-        self.menu_settings.addAction(self.qaction_open_settings)
+        self.menu_file.addAction(self.qaction_open_settings)
+        self.qaction_save_dialog = QAction(MENU_SAVE_DIALOG,self)
+        self.menu_file.addAction(self.qaction_save_dialog)
+        self.qaction_save_dialog.triggered.connect(self.save_dialog)
         self.menu_send_file = self.menu_menubar.addMenu(MENU_SEND_FILE)
         self.action_send_file = QAction(MENU_CHOOSE_FILE_TO_SEND, self)
         self.action_send_file.triggered.connect(self.send_file)
@@ -179,6 +183,12 @@ class MainWindow(QMainWindow):
 
     def open_settings(self):
         settings_Dialog.SettingsWindow(self)
+
+    def save_dialog(self):
+        text = self.list_widget.toPlainText()
+        with open(self.default_save_folder + str('/') + "saved_dialog@"+datetime.datetime.now().strftime(date_format).replace(" ","_"), 'w') as f:
+            f.write(text)
+            f.close()
 
     def send_file(self):
         if self.check_if_settings_r_ok():
