@@ -106,8 +106,11 @@ class MainWindow(QMainWindow):
         self.menu_exit.addAction(self.action_exit)
         self.setMenuBar(self.menu_menubar)
         self.layout_central_widget = QVBoxLayout()
-        self.list_widget = QListWidget()
+        self.list_widget = QTextEdit()
+        self.list_widget.setReadOnly(True)
+        self.list_widget.setLineWrapMode(QTextEdit.NoWrap)
         self.input_text_textedit = QTextEdit()
+        self.input_text_textedit.setLineWrapMode(QTextEdit.NoWrap)
         self.send_button = QPushButton(BUTTON_SEND)
         self.send_button.clicked.connect(self.send_message)
         self.clear_button = QPushButton(BUTTON_CLEAR)
@@ -193,12 +196,33 @@ class MainWindow(QMainWindow):
                              fileText +=line
                      self.send.text = fileText
                      tt = "[ "+MSG_SENT_FILE+" : "+filename+"  @ "+datetime.datetime.now().strftime(date_format)+" ] "
-                     tmp  = QListWidgetItem(tt)
-                     tmp.setForeground(QColor('red'))
-                     self.list_widget.addItem(tmp)
-                     self.list_widget.scrollToBottom()
+                     self.list_widget.setTextColor('red')
+                     self.list_widget.append(tt)
                      self.send.filename  = ntpath.basename(filename)
                      self.send.start()
+
+    def send_message(self):
+        if self.check_if_settings_r_ok():
+            if not self.is_waiting_data and not self.send.isRunning():
+
+                self.send.text = self.input_text_textedit.toPlainText()
+                self.send.filename = None
+                self.send.type = 'msg'
+                find = re.search("^\s*$",self.send.text)
+                if not find:
+                    self.status_bar_widget.showMessage(MSG_START_SENDING, time_show_msg_on_statusbar)
+                    tt = "[ "+self.nickname+" ("+MSG_ME+") @ "+datetime.datetime.now().strftime(date_format)+" ]: "+self.send.text
+                    self.list_widget.setTextColor('blue')
+                    self.list_widget.append(tt)
+
+                    self.send.start()
+                    self.input_text_textedit.clear()
+                else:
+                    self.status_bar_widget.showMessage(MSG_CANNOT_SEND_AN_EMPTY_STRING, time_show_msg_on_statusbar)
+            elif self.is_waiting_data:
+               self.status_bar_widget.showMessage(MSG_CANNOT_SEND_YET_RECEIVING_DATA, time_show_msg_on_statusbar)
+
+
 
     def open_about(self):
         t = """
@@ -242,27 +266,6 @@ class MainWindow(QMainWindow):
             return False
         return True
 
-    def send_message(self):
-        if self.check_if_settings_r_ok():
-            if not self.is_waiting_data and not self.send.isRunning():
-
-                self.send.text = self.input_text_textedit.toPlainText()
-                self.send.filename = None
-                self.send.type = 'msg'
-                find = re.search("^\s*$",self.send.text)
-                if not find:
-                    self.status_bar_widget.showMessage(MSG_START_SENDING, time_show_msg_on_statusbar)
-                    tt = "[ "+self.nickname+" ("+MSG_ME+") @ "+datetime.datetime.now().strftime(date_format)+" ]: "+self.send.text
-                    tmp = QListWidgetItem(tt)
-                    tmp.setForeground(QColor('blue'))
-                    self.list_widget.addItem(tmp)
-                    self.list_widget.scrollToBottom()
-                    self.send.start()
-                    self.input_text_textedit.clear()
-                else:
-                    self.status_bar_widget.showMessage(MSG_CANNOT_SEND_AN_EMPTY_STRING, time_show_msg_on_statusbar)
-            elif self.is_waiting_data:
-               self.status_bar_widget.showMessage(MSG_CANNOT_SEND_YET_RECEIVING_DATA, time_show_msg_on_statusbar)
 
     def clear_inputtext_text(self):
         self.input_text_textedit.clear()
@@ -324,13 +327,11 @@ class MainWindow(QMainWindow):
                
 
             self.receive.clear_vars()
-            tmp = QListWidgetItem(tt)
             if self.receive.type=='msg':
-                tmp.setForeground(QColor('green'))
+                self.list_widget.setTextColor('green')
             elif self.receive.type=='file':
-                tmp.setForeground(QColor('red'))
-            self.list_widget.addItem(tmp)
-            self.list_widget.scrollToBottom()
+                self.list_widget.setTextColor('red')
+            self.list_widget.append(tt)
         except Exception as e:
             print(e)
 
