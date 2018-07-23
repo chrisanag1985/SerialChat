@@ -6,8 +6,10 @@ import ntpath
 import os
 import re
 
-from PySide.QtCore import *
-from PySide.QtGui import *
+from PySide.QtCore import QTimer, Qt, Slot
+from PySide.QtGui import QMainWindow, QMenuBar, QAction, QVBoxLayout, QTextEdit, QPushButton, QHBoxLayout, QDockWidget, \
+    QLabel, QListWidget, QWidget, QProgressBar, QStatusBar, QIcon, QFileDialog, QMessageBox, QListWidgetItem, \
+    QApplication
 
 import libs.serialThreads as lib_thread
 import libs.settingsDialog as settings_Dialog

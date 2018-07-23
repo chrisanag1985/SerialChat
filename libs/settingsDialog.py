@@ -1,6 +1,6 @@
 import ConfigParser
 
-from PySide.QtGui import *
+from PySide.QtGui import QDialog, QDialogButtonBox, QComboBox, QCheckBox, QLineEdit, QPushButton, QIcon, QHBoxLayout, QWidget, QFormLayout, QFileDialog
 from Crypto.Hash import MD5
 
 import libserial
