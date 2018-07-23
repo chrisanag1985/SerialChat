@@ -27,6 +27,7 @@ settings_parser.read('config/settings.ini')
 time_before_flush_junk_data = int(settings_parser.get("app_settings", "time_before_flush_junk_data"))
 time_show_msg_on_statusbar = int(settings_parser.get("app_settings", "time_show_msg_on_statusbar"))
 date_format = str(settings_parser.get("app_settings", "date_format"))
+date_format_underscored = str(settings_parser.get("app_settings","date_format_underscored"))
 
 lang = str(settings_parser.get("default", "lang"))
 language = ConfigParser.ConfigParser()
@@ -204,7 +205,7 @@ class MainWindow(QMainWindow):
 
     def save_dialog(self):
         text = self.list_widget.toPlainText()
-        with open(self.default_save_folder + str('/') + "saved_dialog@"+datetime.datetime.now().strftime(date_format).replace(" ","_"), 'w') as f:
+        with open(self.default_save_folder + str('/') + "saved_dialog_"+datetime.datetime.now().strftime(date_format_underscored)+".txt", 'w') as f:
             f.write(text)
             f.close()
 
