@@ -39,6 +39,13 @@ __pip__ :
 pip2 install pyserial==2.7
 ```
 
+the *playsound*:
+
+**pip**:
+
+```bash
+pip2 install playlinux
+```
 
 
 and the *pycrypto* :

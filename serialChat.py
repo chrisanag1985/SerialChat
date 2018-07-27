@@ -5,9 +5,11 @@ import json
 import ntpath
 import os
 import re
+import playsound
 
 from PySide.QtCore import *
 from PySide.QtGui import *
+
 
 import libs.serialThreads as lib_thread
 import libs.settingsDialog as settings_Dialog
@@ -90,9 +92,8 @@ class MainWindow(QMainWindow):
         self.timer.setInterval(time_before_flush_junk_data) 
         self.timer.timeout.connect(self.clear_junk_data)
 
-        self.beep = QSound("resources/sounds/Beep.wav")
-        self.beep_available = QSound.isAvailable()
-        
+
+
         self.menu_menubar = QMenuBar()
         self.menu_file = self.menu_menubar.addMenu(MENU_FILE)
         self.qaction_open_settings = QAction(MENU_OPEN_SETTINGS, self)
@@ -141,7 +142,6 @@ class MainWindow(QMainWindow):
         self.online_night_mode.setChecked(False)
         self.online_night_mode.stateChanged.connect(self.night_mode)
         self.online_beep_checkbox = QCheckBox(CHECKBOX_BEEP_TITLE)
-        self.online_beep_checkbox.setDisabled(not self.beep_available)
         self.online_label = QLabel(USERS_TITLE)
         self.online_list_widget = QListWidget()
         self.online_multi_widget = QWidget()
@@ -381,8 +381,6 @@ class MainWindow(QMainWindow):
                 self.list_widget.setTextColor(QColor(133,153,0))
             elif self.receive.type=='file':
                 self.list_widget.setTextColor(QColor(220,50,47))
-            if self.online_beep_checkbox.isChecked():
-                self.beep.play()
 
             if not self.receive.nickname in self.other_nicknames.keys():
                 dtime = datetime.datetime.now().strftime(date_format)
@@ -400,6 +398,10 @@ class MainWindow(QMainWindow):
                 aaaa= self.online_list_widget.findItems("^"+self.receive.nickname+"\n.*\n.*$", Qt.MatchRegExp)
                 aaaa[0].setText(self.receive.nickname+"\n"+USERS_LAST_SEEN+":"+dtime+"\n"+USERS_COORDINATES+":")
             self.list_widget.append(tt)
+            if self.online_beep_checkbox.isChecked():
+                playsound.playsound("resources/sounds/Beep.wav")
+
+
         except Exception as e:
             print(e)
 
