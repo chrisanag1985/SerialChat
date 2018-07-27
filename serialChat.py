@@ -6,10 +6,8 @@ import ntpath
 import os
 import re
 
-from PySide.QtCore import QTimer, Qt, Slot
-from PySide.QtGui import QMainWindow, QMenuBar, QAction, QVBoxLayout, QTextEdit, QPushButton, QHBoxLayout, QDockWidget, \
-    QLabel, QListWidget, QWidget, QProgressBar, QStatusBar, QIcon, QFileDialog, QMessageBox, QListWidgetItem, \
-    QApplication
+from PySide.QtCore import *
+from PySide.QtGui import *
 
 import libs.serialThreads as lib_thread
 import libs.settingsDialog as settings_Dialog
@@ -29,7 +27,6 @@ settings_parser.read('config/settings.ini')
 time_before_flush_junk_data = int(settings_parser.get("app_settings", "time_before_flush_junk_data"))
 time_show_msg_on_statusbar = int(settings_parser.get("app_settings", "time_show_msg_on_statusbar"))
 date_format = str(settings_parser.get("app_settings", "date_format"))
-date_format_underscored = str(settings_parser.get("app_settings","date_format_underscored"))
 
 lang = str(settings_parser.get("default", "lang"))
 language = ConfigParser.ConfigParser()
@@ -63,6 +60,8 @@ MSG_RECEIVING_DATA = language.get(lang,"MSG_RECEIVING_DATA").decode('utf-8')
 USERS_TITLE = language.get(lang,"USERS_TITLE").decode('utf-8')
 USERS_LAST_SEEN = language.get(lang,"USERS_LAST_SEEN").decode('utf-8')
 USERS_COORDINATES = language.get(lang,"USERS_COORDINATES").decode('utf-8')
+CHECKBOX_NIGHTMODE_TITLE = language.get(lang,"CHECKBOX_NIGHTMODE_TITLE").decode('utf-8')
+CHECKBOX_BEEP_TITLE = language.get(lang,"CHECKBOX_BEEP_TITLE").decode('utf-8')
 APP_TITLE = language.get(lang,"APP_TITLE").decode('utf-8')
 MSGBOX_HELP_TITLE = language.get(lang,"MSGBOX_HELP_TITLE").decode('utf-8')
 MSGBOX_WARNING_TITLE = language.get(lang,"MSGBOX_WARNING_TITLE").decode('utf-8')
@@ -91,6 +90,8 @@ class MainWindow(QMainWindow):
         self.timer.setInterval(time_before_flush_junk_data) 
         self.timer.timeout.connect(self.clear_junk_data)
 
+        self.beep = QSound("resources/sounds/Beep.wav")
+        self.beep_available = QSound.isAvailable()
         
         self.menu_menubar = QMenuBar()
         self.menu_file = self.menu_menubar.addMenu(MENU_FILE)
@@ -122,6 +123,7 @@ class MainWindow(QMainWindow):
         self.list_widget.setLineWrapMode(QTextEdit.NoWrap)
         self.input_text_textedit = QTextEdit()
         self.input_text_textedit.setLineWrapMode(QTextEdit.NoWrap)
+        self.input_text_textedit.setTextColor(QColor(203,75,22))
         self.send_button = QPushButton(BUTTON_SEND)
         self.send_button.clicked.connect(self.send_message)
         self.clear_button = QPushButton(BUTTON_CLEAR)
@@ -135,9 +137,16 @@ class MainWindow(QMainWindow):
         self.right_dockwidget = QDockWidget()
         self.right_dockwidget.setFeatures(QDockWidget.NoDockWidgetFeatures)
         self.online_vertical_layout = QVBoxLayout()
+        self.online_night_mode = QCheckBox(CHECKBOX_NIGHTMODE_TITLE)
+        self.online_night_mode.setChecked(False)
+        self.online_night_mode.stateChanged.connect(self.night_mode)
+        self.online_beep_checkbox = QCheckBox(CHECKBOX_BEEP_TITLE)
+        self.online_beep_checkbox.setDisabled(not self.beep_available)
         self.online_label = QLabel(USERS_TITLE)
         self.online_list_widget = QListWidget()
         self.online_multi_widget = QWidget()
+        self.online_vertical_layout.addWidget(self.online_beep_checkbox)
+        self.online_vertical_layout.addWidget(self.online_night_mode)
         self.online_vertical_layout.addWidget(self.online_label)
         self.online_vertical_layout.addWidget(self.online_list_widget)
         self.online_multi_widget.setLayout(self.online_vertical_layout)
@@ -190,6 +199,16 @@ class MainWindow(QMainWindow):
 
             self.receive.start()
 
+    def night_mode(self):
+        if self.online_night_mode.isChecked():
+            self.list_widget.setStyleSheet("QTextEdit { background-color: rgb(0,43,54)} ")
+            self.input_text_textedit.setStyleSheet("QTextEdit { background-color: rgb(0,43,54) } ")
+            self.online_list_widget.setStyleSheet("QListWidget { background-color: rgb(0,43,54) } ")
+        else:
+            self.list_widget.setStyleSheet("QTextEdit { background-color: white } ")
+            self.input_text_textedit.setStyleSheet("QTextEdit { background-color: white } ")
+            self.online_list_widget.setStyleSheet(("QListWidget {background-color: white}"))
+
     def interface_problem(self, exception):
         self.status_bar_widget.showMessage(exception, time_show_msg_on_statusbar)
         self.receive.loop_run = False
@@ -207,7 +226,7 @@ class MainWindow(QMainWindow):
 
     def save_dialog(self):
         text = self.list_widget.toPlainText()
-        with open(self.default_save_folder + str('/') + "saved_dialog_"+datetime.datetime.now().strftime(date_format_underscored)+".txt", 'w') as f:
+        with open(self.default_save_folder + str('/') + "saved_dialog@"+datetime.datetime.now().strftime(date_format).replace(" ","_"), 'w') as f:
             f.write(text)
             f.close()
 
@@ -243,7 +262,7 @@ class MainWindow(QMainWindow):
                 if not find:
                     self.status_bar_widget.showMessage(MSG_START_SENDING, time_show_msg_on_statusbar)
                     tt = "[ "+self.nickname+" ("+MSG_ME+") @ "+datetime.datetime.now().strftime(date_format)+" ]: "+self.send.text
-                    self.list_widget.setTextColor('blue')
+                    self.list_widget.setTextColor(QColor(38,139,210))
                     self.list_widget.append(tt)
 
                     self.send.start()
@@ -359,9 +378,11 @@ class MainWindow(QMainWindow):
 
             self.receive.clear_vars()
             if self.receive.type=='msg':
-                self.list_widget.setTextColor('green')
+                self.list_widget.setTextColor(QColor(133,153,0))
             elif self.receive.type=='file':
-                self.list_widget.setTextColor('red')
+                self.list_widget.setTextColor(QColor(220,50,47))
+            if self.online_beep_checkbox.isChecked():
+                self.beep.play()
 
             if not self.receive.nickname in self.other_nicknames.keys():
                 dtime = datetime.datetime.now().strftime(date_format)
@@ -369,8 +390,9 @@ class MainWindow(QMainWindow):
                 tmp_item = QListWidgetItem(self.receive.nickname)
                 tmp_text = self.receive.nickname+"\n"+USERS_LAST_SEEN+":"+dtime+"\n"+USERS_COORDINATES+":"
                 tmp_item.setText(tmp_text)
+                tmp_item.setForeground(QColor(38,139,210))
                 if self.online_list_widget.count()%2 == 0:
-                    tmp_item.setBackground(Qt.gray)
+                    tmp_item.setBackground(Qt.lightGray)
                 self.online_list_widget.addItem(tmp_item)
             else:
                 dtime = datetime.datetime.now().strftime(date_format)
@@ -396,7 +418,7 @@ class MainWindow(QMainWindow):
     def catch_eop_slot(self, len_of_data):
         self.status_bar_widget.showMessage(MSG_RECEIVING_DATA, time_show_msg_on_statusbar)
         self.counter += int(len_of_data)
-        self.progress_bar_widget.setValue(self.counter)
+        self.progress_bar_widget.setValue(self.counter )
 
 
 ##########################end class Main Window#############################

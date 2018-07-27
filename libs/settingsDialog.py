@@ -1,4 +1,5 @@
 import ConfigParser
+import re
 
 from PySide.QtGui import QDialog, QDialogButtonBox, QComboBox, QCheckBox, QLineEdit, QPushButton, QIcon, QHBoxLayout, QWidget, QFormLayout, QFileDialog
 from Crypto.Hash import MD5
@@ -269,7 +270,9 @@ class SettingsWindow(QDialog):
             self.parent.encryption_key = None
         
         if self.nickname_lineedit.text() != "":
-            self.parent.nickname = self.nickname_lineedit.text()
+            nick = self.nickname_lineedit.text().rstrip()
+            nick = nick.replace(" ","_")
+            self.parent.nickname = nick
         if self.save_folder_editline.text() != "" :
             self.parent.default_save_folder = self.save_folder_editline.text()
         self.parent.intervaltime = int(self.interval_time_lineedit.text())
