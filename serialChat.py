@@ -23,12 +23,32 @@ choosen_profile = "None"
 custom_settings = False
 
 
+def make_RGB(str_rgb):
+    r,g,b = str_rgb.split(",")
+    return int(r),int(g),int(b)
+
+
 settings_parser = ConfigParser.ConfigParser()
 settings_parser.read('config/settings.ini')
 
 time_before_flush_junk_data = int(settings_parser.get("app_settings", "time_before_flush_junk_data"))
 time_show_msg_on_statusbar = int(settings_parser.get("app_settings", "time_show_msg_on_statusbar"))
 date_format = str(settings_parser.get("app_settings", "date_format"))
+incoming_message_sound_file = str(settings_parser.get("app_settings","incoming_message_sound_file"))
+
+r,g,b = make_RGB(settings_parser.get("app_settings","color_me"))
+color_me = QColor(r,g,b)
+r,g,b = make_RGB(settings_parser.get("app_settings","color_input_text"))
+color_input_text = QColor(r,g,b)
+r,g,b = make_RGB(settings_parser.get("app_settings","color_receive_msg"))
+color_receive_msg = QColor(r,g,b)
+r,g,b = make_RGB(settings_parser.get("app_settings","color_receive_file"))
+color_receive_file = QColor(r,g,b)
+r,g,b = make_RGB(settings_parser.get("app_settings","color_online"))
+color_online = QColor(r,g,b)
+color_background = settings_parser.get("app_settings","color_background")
+color_background_nightmode = settings_parser.get("app_settings","color_background_nightmode")
+
 
 lang = str(settings_parser.get("default", "lang"))
 language = ConfigParser.ConfigParser()
@@ -124,7 +144,7 @@ class MainWindow(QMainWindow):
         self.list_widget.setLineWrapMode(QTextEdit.NoWrap)
         self.input_text_textedit = QTextEdit()
         self.input_text_textedit.setLineWrapMode(QTextEdit.NoWrap)
-        self.input_text_textedit.setTextColor(QColor(203,75,22))
+        self.input_text_textedit.setTextColor(color_input_text)
         self.send_button = QPushButton(BUTTON_SEND)
         self.send_button.clicked.connect(self.send_message)
         self.clear_button = QPushButton(BUTTON_CLEAR)
@@ -201,13 +221,13 @@ class MainWindow(QMainWindow):
 
     def night_mode(self):
         if self.online_night_mode.isChecked():
-            self.list_widget.setStyleSheet("QTextEdit { background-color: rgb(0,43,54)} ")
-            self.input_text_textedit.setStyleSheet("QTextEdit { background-color: rgb(0,43,54) } ")
-            self.online_list_widget.setStyleSheet("QListWidget { background-color: rgb(0,43,54) } ")
+            self.list_widget.setStyleSheet("QTextEdit { background-color: rgb("+color_background_nightmode+")} ")
+            self.input_text_textedit.setStyleSheet("QTextEdit { background-color: rgb("+color_background_nightmode+") } ")
+            self.online_list_widget.setStyleSheet("QListWidget { background-color: rgb("+color_background_nightmode+") } ")
         else:
-            self.list_widget.setStyleSheet("QTextEdit { background-color: white } ")
-            self.input_text_textedit.setStyleSheet("QTextEdit { background-color: white } ")
-            self.online_list_widget.setStyleSheet(("QListWidget {background-color: white}"))
+            self.list_widget.setStyleSheet("QTextEdit { background-color: rgb("+color_background+" )} ")
+            self.input_text_textedit.setStyleSheet("QTextEdit { background-color: rgb("+color_background+" )} ")
+            self.online_list_widget.setStyleSheet(("QListWidget {background-color: rgb("+color_background+")}"))
 
     def interface_problem(self, exception):
         self.status_bar_widget.showMessage(exception, time_show_msg_on_statusbar)
@@ -246,7 +266,7 @@ class MainWindow(QMainWindow):
                              fileText +=line
                      self.send.text = fileText
                      tt = "[ "+MSG_SENT_FILE+" : "+filename+"  @ "+datetime.datetime.now().strftime(date_format)+" ] "
-                     self.list_widget.setTextColor('red')
+                     self.list_widget.setTextColor(color_receive_file)
                      self.list_widget.append(tt)
                      self.send.filename  = ntpath.basename(filename)
                      self.send.start()
@@ -262,7 +282,7 @@ class MainWindow(QMainWindow):
                 if not find:
                     self.status_bar_widget.showMessage(MSG_START_SENDING, time_show_msg_on_statusbar)
                     tt = "[ "+self.nickname+" ("+MSG_ME+") @ "+datetime.datetime.now().strftime(date_format)+" ]: "+self.send.text
-                    self.list_widget.setTextColor(QColor(38,139,210))
+                    self.list_widget.setTextColor(color_me)
                     self.list_widget.append(tt)
 
                     self.send.start()
@@ -378,9 +398,9 @@ class MainWindow(QMainWindow):
 
             self.receive.clear_vars()
             if self.receive.type=='msg':
-                self.list_widget.setTextColor(QColor(133,153,0))
+                self.list_widget.setTextColor(color_receive_msg)
             elif self.receive.type=='file':
-                self.list_widget.setTextColor(QColor(220,50,47))
+                self.list_widget.setTextColor(color_receive_file)
 
             if not self.receive.nickname in self.other_nicknames.keys():
                 dtime = datetime.datetime.now().strftime(date_format)
@@ -388,7 +408,7 @@ class MainWindow(QMainWindow):
                 tmp_item = QListWidgetItem(self.receive.nickname)
                 tmp_text = self.receive.nickname+"\n"+USERS_LAST_SEEN+":"+dtime+"\n"+USERS_COORDINATES+":"
                 tmp_item.setText(tmp_text)
-                tmp_item.setForeground(QColor(38,139,210))
+                tmp_item.setForeground(color_online)
                 if self.online_list_widget.count()%2 == 0:
                     tmp_item.setBackground(Qt.lightGray)
                 self.online_list_widget.addItem(tmp_item)
@@ -399,7 +419,7 @@ class MainWindow(QMainWindow):
                 aaaa[0].setText(self.receive.nickname+"\n"+USERS_LAST_SEEN+":"+dtime+"\n"+USERS_COORDINATES+":")
             self.list_widget.append(tt)
             if self.online_beep_checkbox.isChecked():
-                playsound.playsound("resources/sounds/Beep.wav")
+                playsound.playsound(incoming_message_sound_file)
 
 
         except Exception as e:
