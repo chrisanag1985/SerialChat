@@ -7,7 +7,7 @@ from Crypto.Hash import MD5
 import libserial
 import datetime
 
-serial_speeds = ["1200","2400","4800","9600","14400","19200"]
+serial_speeds = ["300","600","1200","2400","4800","9600","14400","19200","38400","56000","57600","115200"]
 parity_values = ["None","Odd","Even"]
 bytesize_values = [5,6,7,8]
 stop_values = ["1","1,5","2"]
