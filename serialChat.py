@@ -89,6 +89,8 @@ CHECKBOX_BEEP_TITLE = language.get(lang,"CHECKBOX_BEEP_TITLE").decode('utf-8')
 APP_TITLE = language.get(lang,"APP_TITLE").decode('utf-8')
 MSGBOX_HELP_TITLE = language.get(lang,"MSGBOX_HELP_TITLE").decode('utf-8')
 MSGBOX_WARNING_TITLE = language.get(lang,"MSGBOX_WARNING_TITLE").decode('utf-8')
+ERROR_INTERFACE_DOWN_MESSAGE = language.get(lang,"ERROR_INTERFACE_DOWN_MESSAGE").decode('utf-8')
+ERROR_INTERFACE_DOWN_TITLE = language.get(lang,"ERROR_INTERFACE_DOWN_TITLE").decode('utf-8')
 
 
 class MainWindow(QMainWindow):
@@ -235,6 +237,10 @@ class MainWindow(QMainWindow):
         self.status_bar_widget.showMessage(exception, time_show_msg_on_statusbar)
         self.receive.loop_run = False
         self.receive.wait()
+        if "Input/output" in exception:
+            msgBox = QMessageBox(icon=QMessageBox.Warning, text=ERROR_INTERFACE_DOWN_MESSAGE)
+            msgBox.setWindowTitle(ERROR_INTERFACE_DOWN_TITLE)
+            msgBox.exec_()
         self.receive = None
 
     def clear_junk_data(self):

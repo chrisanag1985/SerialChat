@@ -1,7 +1,7 @@
 import ConfigParser
-import re
-
-from PySide.QtGui import QDialog, QDialogButtonBox, QComboBox, QCheckBox, QLineEdit, QPushButton, QIcon, QHBoxLayout, QWidget, QFormLayout, QFileDialog
+import os
+from PySide.QtGui import QDialog, QDialogButtonBox, QComboBox, QCheckBox, QLineEdit, QPushButton, QIcon, QHBoxLayout, \
+    QWidget, QFormLayout, QFileDialog, QMessageBox
 from Crypto.Hash import MD5
 
 import libserial
@@ -39,6 +39,10 @@ FORMLAYOUT_ENABLE_ENCRYPTION_TITLE = language.get(lang,"FORMLAYOUT_ENABLE_ENCRYP
 FORMLAYOUT_ENCRYPTION_KEY_TITLE = language.get(lang,"FORMLAYOUT_ENCRYPTION_KEY_TITLE").decode('utf-8')
 FORMLAYOUT_NICKNAME_TITLE= language.get(lang,"FORMLAYOUT_NICKNAME_TITLE" ).decode('utf-8')
 FORMLAYOUT_SAVE_FOLDER_FILE_TITLE= language.get(lang,"FORMLAYOUT_SAVE_FOLDER_FILE_TITLE" ).decode('utf-8')
+ERROR_NO_DIR_MESSAGE = language.get(lang,"ERROR_NO_DIR_MESSAGE").decode('utf-8')
+ERROR_NO_DIR_TITLE =  language.get(lang,"ERROR_NO_DIR_TITLE").decode('utf-8')
+ERROR_NO_INT_MESSAGE = language.get(lang,"ERROR_NO_INT_MESSAGE").decode('utf-8')
+ERROR_NO_INT_TITLE = language.get(lang,"ERROR_NO_INT_TITLE").decode('utf-8')
 MSG_SERIAL_INT_STARTED= language.get(lang,"MSG_SERIAL_INT_STARTED").decode('utf-8')
 
 
@@ -62,7 +66,7 @@ class SettingsWindow(QDialog):
 
         self.setWindowTitle(SERIAL_CHAT_SETTINGS_TITLE)
 
-        self.button_box_dialog = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box_dialog = QDialogButtonBox( QDialogButtonBox.Cancel | QDialogButtonBox.Ok)
         self.button_box_dialog.button(QDialogButtonBox.Ok).setText(CONNECT)
         self.button_box_dialog.button(QDialogButtonBox.Cancel).setText(CANCEL)
         self.button_box_dialog.accepted.connect(self.accept)
@@ -99,6 +103,7 @@ class SettingsWindow(QDialog):
         self.custom_settings_checkbox.stateChanged.connect(self.custom_settings_enable_disable)
 
         self.interval_time_lineedit = QLineEdit(str(self.parent.interval_time))
+        self.interval_time_lineedit.editingFinished.connect(self.check_if_digit)
         self.interval_time_lineedit.setDisabled(True)
          
         self.serial_speed_combobox = QComboBox()
@@ -168,6 +173,7 @@ class SettingsWindow(QDialog):
 
         
         self.save_folder_editline = QLineEdit(self.parent.default_save_folder)
+        self.save_folder_editline.editingFinished.connect(self.check_if_folder_exists)
         if self.settings_parser.has_option('default', 'default_save_folder'):
             folder = self.settings_parser.get('default', 'default_save_folder')
             if type(folder) == str :
@@ -230,6 +236,23 @@ class SettingsWindow(QDialog):
         else:
             self.encryption_password_lineedit.setDisabled(True)
 
+    def check_if_folder_exists(self):
+
+        if not os.path.isdir(self.save_folder_editline.text()):
+            msgBox = QMessageBox(icon=QMessageBox.Warning,text=ERROR_NO_DIR_MESSAGE)
+            msgBox.setWindowTitle(ERROR_NO_DIR_TITLE)
+            msgBox.exec_()
+            self.save_folder_editline.setText(self.parent.default_save_folder)
+
+    def check_if_digit(self):
+
+        try:
+            int(self.interval_time_lineedit.text())
+        except:
+            msgBox = QMessageBox(icon=QMessageBox.Warning, text=ERROR_NO_INT_MESSAGE)
+            msgBox.setWindowTitle(ERROR_NO_INT_TITLE)
+            msgBox.exec_()
+            self.interval_time_lineedit.setText(str(self.parent.interval_time))
 
 
 
@@ -274,8 +297,9 @@ class SettingsWindow(QDialog):
             nick = nick.replace(" ","_")
             self.parent.nickname = nick
         if self.save_folder_editline.text() != "" :
-            self.parent.default_save_folder = self.save_folder_editline.text()
-        self.parent.intervaltime = int(self.interval_time_lineedit.text())
+            if os.path.isdir(self.save_folder_editline.text()):
+                self.parent.default_save_folder = self.save_folder_editline.text()
+        self.parent.interval_time = int(self.interval_time_lineedit.text())
         if  self.flowcontrol_combobox.currentText() == "XON/XOFF":
             x_control = True
         else:
@@ -320,6 +344,8 @@ class SettingsWindow(QDialog):
                 self.flowcontrol_combobox.setCurrentIndex(self.flowcontrol_combobox.findText("None"))
             if self.config_parser.get(section, "acp127") == "True" :
                 self.enable_ACP127.setChecked(True)
+            else:
+                self.enable_ACP127.setChecked(False)
         elif self.profiles_combobox.currentText() == "None":
             self.serial_speed_combobox.setCurrentIndex(self.serial_speed_combobox.findText('9600'))
             self.interval_time_lineedit.setText(str(self.parent.intervaltime))

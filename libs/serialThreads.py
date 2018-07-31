@@ -4,6 +4,7 @@ import json
 import time
 
 from PySide.QtCore import *
+from PySide.QtGui import QMessageBox
 
 import libs.crypt as crypt
 
@@ -40,7 +41,7 @@ class Send(QThread):
         self.filename = None
         self.type = 'msg'
         self.ser = parent.serial_port 
-        self.interval_time = parent.intervaltime
+        self.interval_time = parent.interval_time
         self.progressbar = parent.progress_bar_widget
 
         if self.parent.isEncryptionEnabled:
@@ -184,6 +185,7 @@ class Receive(QThread):
                 iswait = self.ser.inWaiting()
             except Exception as e:
                 print(e)
+
                 self.interface_problem_signal.emit(str(e))
             
             
