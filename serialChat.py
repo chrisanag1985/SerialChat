@@ -238,7 +238,7 @@ class MainWindow(QMainWindow):
         self.receive.loop_run = False
         self.receive.wait()
         if "Input/output" in exception:
-            msgBox = QMessageBox(icon=QMessageBox.Warning, text=ERROR_INTERFACE_DOWN_MESSAGE)
+            msgBox = QMessageBox(icon=QMessageBox.Critical, text=ERROR_INTERFACE_DOWN_MESSAGE)
             msgBox.setWindowTitle(ERROR_INTERFACE_DOWN_TITLE)
             msgBox.exec_()
         self.receive = None
