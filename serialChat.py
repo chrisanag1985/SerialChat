@@ -91,6 +91,7 @@ MSGBOX_HELP_TITLE = language.get(lang,"MSGBOX_HELP_TITLE").decode('utf-8')
 MSGBOX_WARNING_TITLE = language.get(lang,"MSGBOX_WARNING_TITLE").decode('utf-8')
 ERROR_INTERFACE_DOWN_MESSAGE = language.get(lang,"ERROR_INTERFACE_DOWN_MESSAGE").decode('utf-8')
 ERROR_INTERFACE_DOWN_TITLE = language.get(lang,"ERROR_INTERFACE_DOWN_TITLE").decode('utf-8')
+MSG_DIALOG_SAVED = language.get(lang,'MSG_DIALOG_SAVED').decode('utf-8')
 
 
 class MainWindow(QMainWindow):
@@ -254,9 +255,13 @@ class MainWindow(QMainWindow):
 
     def save_dialog(self):
         text = self.list_widget.toPlainText()
-        with open(self.default_save_folder + str('/') + "saved_dialog@"+datetime.datetime.now().strftime(date_format_underscored), 'w') as f:
+        filename = self.default_save_folder + str('/') + "saved_dialog@" + datetime.datetime.now().strftime(date_format_underscored)
+        with open(filename,'w') as f:
+            if type(text) == unicode:
+                text = text.encode('utf-8')
             f.write(text)
             f.close()
+            self.status_bar_widget.showMessage(MSG_DIALOG_SAVED+filename,time_show_msg_on_statusbar)
 
     def send_file(self):
         if self.check_if_settings_r_ok():

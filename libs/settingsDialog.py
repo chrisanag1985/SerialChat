@@ -179,6 +179,7 @@ class SettingsWindow(QDialog):
             if type(folder) == str :
                 folder = folder.decode('utf-8')
             self.save_folder_editline.setText(folder)
+            self.check_if_folder_exists()
 
         self.dir_browser_button = QPushButton()
         self.dir_browser_button.setIcon(QIcon(icons_folder + 'folder.png'))
