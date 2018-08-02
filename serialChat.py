@@ -92,6 +92,7 @@ MSGBOX_WARNING_TITLE = language.get(lang,"MSGBOX_WARNING_TITLE").decode('utf-8')
 ERROR_INTERFACE_DOWN_MESSAGE = language.get(lang,"ERROR_INTERFACE_DOWN_MESSAGE").decode('utf-8')
 ERROR_INTERFACE_DOWN_TITLE = language.get(lang,"ERROR_INTERFACE_DOWN_TITLE").decode('utf-8')
 MSG_DIALOG_SAVED = language.get(lang,'MSG_DIALOG_SAVED').decode('utf-8')
+ERROR_INTERFACE_TITLE = language.get(lang,"ERROR_INTERFACE_TITLE").decode('utf-8')
 
 
 class MainWindow(QMainWindow):

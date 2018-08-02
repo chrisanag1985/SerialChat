@@ -44,6 +44,7 @@ ERROR_NO_DIR_TITLE =  language.get(lang,"ERROR_NO_DIR_TITLE").decode('utf-8')
 ERROR_NO_INT_MESSAGE = language.get(lang,"ERROR_NO_INT_MESSAGE").decode('utf-8')
 ERROR_NO_INT_TITLE = language.get(lang,"ERROR_NO_INT_TITLE").decode('utf-8')
 MSG_SERIAL_INT_STARTED= language.get(lang,"MSG_SERIAL_INT_STARTED").decode('utf-8')
+ERROR_INTERFACE_TITLE = language.get(lang,"ERROR_INTERFACE_TITLE").decode('utf-8')
 
 
 class SettingsWindow(QDialog):
@@ -318,14 +319,14 @@ class SettingsWindow(QDialog):
             self.parent.receive = None
             res = self.lib.set_serial(port=self.serial_dropdown.currentText(), baudrate=self.serial_speed_combobox.currentText(), bytesize=self.databits_combobox.currentText(), stopbits=self.stopbits_combobox.currentText(), parity=self.parity_combobox.currentText(), xonxoff = x_control, rtscts = r_control)
         if type(res) == OSError:
-            self.parent.statusBar.showMessage(str(res),5000)
+                self.parent.status_bar_widget.showMessage(str(res),5000)
+                msgBox = QMessageBox(icon=QMessageBox.Critical, text=str(res))
+                msgBox.setWindowTitle(ERROR_INTERFACE_TITLE)
+                msgBox.exec_()
         if type(res) is not None and type(res) != OSError:
             self.parent.serial_port = res 
             self.parent.start_threads()
             self.parent.status_bar_widget.showMessage(MSG_SERIAL_INT_STARTED%self.parent.serial_port.port)
-
-        else:
-            print("Sth wrong just happend...")
 
 
     def change_custom_settings_on_profile(self):
