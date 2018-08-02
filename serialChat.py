@@ -256,13 +256,13 @@ class MainWindow(QMainWindow):
 
     def save_dialog(self):
         text = self.list_widget.toPlainText()
-        filename = self.default_save_folder + str('/') + "saved_dialog@" + datetime.datetime.now().strftime(date_format_underscored)
+        filename = self.default_save_folder + str('/') + "saved_dialog@" + datetime.datetime.now().strftime(date_format_underscored)+ ".txt"
         with open(filename,'w') as f:
             if type(text) == unicode:
                 text = text.encode('utf-8')
             f.write(text)
             f.close()
-            self.status_bar_widget.showMessage(MSG_DIALOG_SAVED+filename,time_show_msg_on_statusbar)
+            self.status_bar_widget.showMessage(MSG_DIALOG_SAVED+":"+filename,time_show_msg_on_statusbar)
 
     def send_file(self):
         if self.check_if_settings_r_ok():
