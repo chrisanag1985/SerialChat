@@ -93,6 +93,11 @@ ERROR_INTERFACE_DOWN_MESSAGE = language.get(lang,"ERROR_INTERFACE_DOWN_MESSAGE")
 ERROR_INTERFACE_DOWN_TITLE = language.get(lang,"ERROR_INTERFACE_DOWN_TITLE").decode('utf-8')
 MSG_DIALOG_SAVED = language.get(lang,'MSG_DIALOG_SAVED').decode('utf-8')
 ERROR_INTERFACE_TITLE = language.get(lang,"ERROR_INTERFACE_TITLE").decode('utf-8')
+FILEBROWSER_TITLE = language.get(lang,"FILEBROWSER_TITLE").decode('utf-8')
+FILEBROWSER_LOOKIN = language.get(lang,"FILEBROWSER_LOOKIN").decode('utf-8')
+FILEBROWSER_ACCEPT =  language.get(lang,"FILEBROWSER_ACCEPT").decode('utf-8')
+FILEBROWSER_REJECT = language.get(lang,"FILEBROWSER_REJECT").decode('utf-8')
+FILEBROWSER_FILENAME = language.get(lang,"FILEBROWSER_FILENAME").decode('utf-8')
 
 
 class MainWindow(QMainWindow):
@@ -268,7 +273,15 @@ class MainWindow(QMainWindow):
         if self.check_if_settings_r_ok():
             if not self.is_waiting_data and not self.send.isRunning() :
                 self.status_bar_widget.showMessage(MSG_START_SENDING, time_show_msg_on_statusbar)
-                fname = QFileDialog(self)
+                fname = QFileDialog(self,FILEBROWSER_TITLE)
+                looking_label = QFileDialog.DialogLabel(QFileDialog.LookIn)
+                filename_label = QFileDialog.DialogLabel(QFileDialog.FileName)
+                accept_label = QFileDialog.DialogLabel(QFileDialog.Accept)
+                reject_label = QFileDialog.DialogLabel(QFileDialog.Reject)
+                fname.setLabelText(looking_label,FILEBROWSER_LOOKIN)
+                fname.setLabelText(filename_label,FILEBROWSER_FILENAME)
+                fname.setLabelText(accept_label,FILEBROWSER_ACCEPT)
+                fname.setLabelText(reject_label,FILEBROWSER_REJECT)
                 fname.setFileMode(QFileDialog.ExistingFile)
 
                 if fname.exec_():
