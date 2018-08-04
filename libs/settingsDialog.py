@@ -45,6 +45,10 @@ ERROR_NO_INT_MESSAGE = language.get(lang,"ERROR_NO_INT_MESSAGE").decode('utf-8')
 ERROR_NO_INT_TITLE = language.get(lang,"ERROR_NO_INT_TITLE").decode('utf-8')
 MSG_SERIAL_INT_STARTED= language.get(lang,"MSG_SERIAL_INT_STARTED").decode('utf-8')
 ERROR_INTERFACE_TITLE = language.get(lang,"ERROR_INTERFACE_TITLE").decode('utf-8')
+FILEBROWSER_SAVE_FOLDER_TITLE = language.get(lang,"FILEBROWSER_SAVE_FOLDER_TITLE").decode('utf-8')
+FILEBROWSER_SAVE_FOLDER_LOOKIN = language.get(lang,"FILEBROWSER_SAVE_FOLDER_LOOKIN").decode('utf-8')
+FILEBROWSER_SAVE_FOLDER_FOLDERNAME = language.get(lang,"FILEBROWSER_SAVE_FOLDER_FOLDERNAME").decode('utf-8')
+FILEBROWSER_SAVE_FOLDER_FOLDERTYPE = language.get(lang,"FILEBROWSER_SAVE_FOLDER_FOLDERTYPE").decode('utf-8')
 
 
 class SettingsWindow(QDialog):
@@ -259,8 +263,14 @@ class SettingsWindow(QDialog):
 
 
     def choose_save_dir(self):
-        fname = QFileDialog(self)
+        fname = QFileDialog(self,FILEBROWSER_SAVE_FOLDER_TITLE )
         fname.setFileMode(QFileDialog.Directory)
+        looking_label = QFileDialog.DialogLabel(QFileDialog.LookIn)
+        filename_label = QFileDialog.DialogLabel(QFileDialog.FileName)
+        filetype_label = QFileDialog.DialogLabel(QFileDialog.FileType)
+        fname.setLabelText(looking_label, FILEBROWSER_SAVE_FOLDER_LOOKIN)
+        fname.setLabelText(filename_label, FILEBROWSER_SAVE_FOLDER_FOLDERNAME)
+        fname.setLabelText(filetype_label, FILEBROWSER_SAVE_FOLDER_FOLDERTYPE)
         fname.setOption(QFileDialog.ShowDirsOnly)
 
         if fname.exec_():

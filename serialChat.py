@@ -95,9 +95,8 @@ MSG_DIALOG_SAVED = language.get(lang,'MSG_DIALOG_SAVED').decode('utf-8')
 ERROR_INTERFACE_TITLE = language.get(lang,"ERROR_INTERFACE_TITLE").decode('utf-8')
 FILEBROWSER_TITLE = language.get(lang,"FILEBROWSER_TITLE").decode('utf-8')
 FILEBROWSER_LOOKIN = language.get(lang,"FILEBROWSER_LOOKIN").decode('utf-8')
-FILEBROWSER_ACCEPT =  language.get(lang,"FILEBROWSER_ACCEPT").decode('utf-8')
-FILEBROWSER_REJECT = language.get(lang,"FILEBROWSER_REJECT").decode('utf-8')
 FILEBROWSER_FILENAME = language.get(lang,"FILEBROWSER_FILENAME").decode('utf-8')
+FILEBROWSER_FILETYPE = language.get(lang, "FILEBROWSER_FILETYPE").decode('utf-8')
 
 
 class MainWindow(QMainWindow):
@@ -276,12 +275,10 @@ class MainWindow(QMainWindow):
                 fname = QFileDialog(self,FILEBROWSER_TITLE)
                 looking_label = QFileDialog.DialogLabel(QFileDialog.LookIn)
                 filename_label = QFileDialog.DialogLabel(QFileDialog.FileName)
-                accept_label = QFileDialog.DialogLabel(QFileDialog.Accept)
-                reject_label = QFileDialog.DialogLabel(QFileDialog.Reject)
+                filetype_label = QFileDialog.DialogLabel(QFileDialog.FileType)
                 fname.setLabelText(looking_label,FILEBROWSER_LOOKIN)
                 fname.setLabelText(filename_label,FILEBROWSER_FILENAME)
-                fname.setLabelText(accept_label,FILEBROWSER_ACCEPT)
-                fname.setLabelText(reject_label,FILEBROWSER_REJECT)
+                fname.setLabelText(filetype_label,FILEBROWSER_FILETYPE)
                 fname.setFileMode(QFileDialog.ExistingFile)
 
                 if fname.exec_():
