@@ -95,5 +95,5 @@ After you start the application, you can go to the *settings* menu item and conf
 6. Change the path with one that you wish the incoming files to be saved. 
 
 
-Then your ready to GO...
+Then you're ready to GO...
 
