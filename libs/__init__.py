@@ -1,0 +1,6 @@
+__version__ = '0.1.0'
+__name__ = 'SerialChat'
+__author__ = 'Christos Anagnostopoulos'
+__email__ = 'chrisanag1985@gmail.com'
+__github__ = 'https://github.com/chrisanag1985/SerialChat'
+__description__='Chat Application over Serial Port'

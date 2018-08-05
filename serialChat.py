@@ -10,7 +10,7 @@ import playsound
 from PySide.QtCore import *
 from PySide.QtGui import *
 
-
+import libs
 import libs.serialThreads as lib_thread
 import libs.settingsDialog as settings_Dialog
 
@@ -321,24 +321,27 @@ class MainWindow(QMainWindow):
     def open_about(self):
         t = """
         A Multi-Threading Chat Application for communication over serial cable.
+                    Version : %s
 
                      
                      Created by Christos Anagnostopoulos.
                          chrisanag1985@gmail.com
 
-        """
+        """ % libs.__version__
 
         t_GR = """
         Πολυνηματική εφαρμογή ανταλλαγης μηνυμάτων μέσω σειριακού καλωδίου
+                    Έκδοση : %s
 
                     Δημιουργήθηκε από τον Χρίστο Αναγνωστόπουλο
                         chrisanag1985@gmail.com
 
-        """
-        if lang ==  "EN":
-            msgBox = QMessageBox.about(self,APP_TITLE,t)
-        elif lang == "GR" :
+        """ % libs.__version__
+        if lang == "GR" :
             msgBox = QMessageBox.about(self,APP_TITLE,t_GR.decode('utf-8'))
+        else:
+            msgBox = QMessageBox.about(self,APP_TITLE,t)
+
 
     def open_help(self):
 
@@ -469,6 +472,7 @@ class MainWindow(QMainWindow):
 
 ##########################end class Main Window#############################
 
-app = QApplication([])
-window = MainWindow()
-app.exec_()
+if __name__ == "__main__":
+    app = QApplication([])
+    window = MainWindow()
+    app.exec_()
