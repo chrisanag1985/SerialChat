@@ -74,6 +74,15 @@ Just clone the project to your computer and run the **serialChat.py**
 python2.7 serialChat.py
 ```
 
+**Tested on:**
+ 
+* WIN_XP
+* WIN7
+* WIN10 
+* Linux
+
+---
+
 ## Create Executable File ( OneFile ) 
 
 ```bash
@@ -85,14 +94,6 @@ Inside the folder of SerialChat enter the command
 pyinstaller --noconsole --onefile --icon resources\icons\chat.ico serialChat.py
 ```
 Now put the **serialChat.exe** from the folder **dist** in the same folder with the folders **config** and **resources** and then you will able to run the serialChat by clicking on the **serialChat.exe**
-
-
-**Tested on:**
- 
-* WIN_XP
-* WIN7
-* WIN10 
-* Linux
 
 ---
 
