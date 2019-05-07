@@ -44,7 +44,7 @@ the *playsound*:
 **pip**:
 
 ```bash
-pip2 install playlinux
+pip2 install playsound
 ```
 
 
