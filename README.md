@@ -55,6 +55,7 @@ __pip__:
 ```bash
 pip2 install pycrypto
 ```
+**SOS** to install pycrypto on windows XP it required to install first the Microsoft Visual C++ 9 for Python 2.7 from the internet
 
 **OR just:**
  
@@ -72,6 +73,19 @@ Just clone the project to your computer and run the **serialChat.py**
 ```bash
 python2.7 serialChat.py
 ```
+
+## Create Executable File ( OneFile ) 
+
+```bash
+pip install pyinstaller
+```
+Inside the folder of SerialChat enter the command
+
+```bash
+pyinstaller --noconsole --onefile --icon resources\icons\chat.ico serialChat.py
+```
+Now put the **serialChat.exe** from the folder **dist** in the same folder with the folders **config** and **resources** and then you will able to run the serialChat by clicking on the **serialChat.exe**
+
 
 **Tested on:**
  
